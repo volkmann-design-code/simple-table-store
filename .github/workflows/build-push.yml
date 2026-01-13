@@ -52,7 +52,7 @@ jobs:
         run: |
           PACKAGE_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           echo "Setting visibility to public for package: $PACKAGE_NAME"
-          
+
           # Use GitHub API to set package visibility to public
           curl -L \
             -X PATCH \
