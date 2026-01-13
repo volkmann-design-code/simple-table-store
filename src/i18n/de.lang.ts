@@ -22,8 +22,8 @@ const de: Partial<TranslationKeys> = {
 		email: "E-Mail",
 		password: "Passwort",
 		title: "Anmeldung - Datastore",
-		subtitle: "Melden Sie sich an, um Ihre Daten zu verwalten",
-		contactAdmin: "Kontaktieren Sie Ihren Administrator für den Zugang",
+		subtitle: "Melde dich an, um deine Daten zu verwalten",
+		contactAdmin: "Kontaktiere deinen Administrator, um Zugang zu erhalten",
 	},
 	errors: {
 		emailPasswordRequired: "E-Mail und Passwort sind erforderlich",
@@ -44,7 +44,7 @@ const de: Partial<TranslationKeys> = {
 		slugExists: "Slug existiert bereits für diese Organisation",
 		datastoreRequired:
 			"org_id, name, slug und column_definitions sind erforderlich",
-		datastoreIdRequired: "datastore_id Abfrageparameter ist erforderlich",
+		datastoreIdRequired: "datastore_id ist erforderlich",
 		datastoreIdNameRequired: "datastore_id und name sind erforderlich",
 		apiKeyNotFound: "API-Schlüssel nicht gefunden",
 		fileUploadsNotConfigured: "Datei-Uploads sind nicht konfiguriert",
@@ -75,27 +75,27 @@ const de: Partial<TranslationKeys> = {
 			"{name} hat einen ungültigen Inhaltstyp. Erlaubt: {allowed}",
 	},
 	dashboard: {
-		title: "Ihre Datastores",
+		title: "Deine Datastores",
 		subtitle:
-			"Wählen Sie einen Datastore aus, um Datensätze anzuzeigen und zu verwalten",
+			"Wähle einen Datastore aus, um Datensätze anzuzeigen und zu verwalten",
 		noDatastores: "Noch keine Datastores",
 		contactAdmin:
-			"Kontaktieren Sie Ihren Administrator, um einen Datastore zu erstellen",
+			"Kontaktiere deinen Administrator, um einen Datastore erstellen zu lassen",
 		columns: "Spalten",
 	},
 	datastore: {
 		addRecord: "Datensatz hinzufügen",
 		editRecord: "Datensatz bearbeiten",
 		noRecords:
-			'Noch keine Datensätze. Klicken Sie auf "Datensatz hinzufügen", um einen zu erstellen.',
+			'Noch keine Datensätze. Klick auf "Datensatz hinzufügen", um einen zu erstellen.',
 		deleteConfirm: "Diesen Datensatz löschen?",
 		currentFile: "Aktuelle Datei:",
-		selectNewFile: "Wählen Sie eine neue Datei aus, um sie zu ersetzen.",
+		selectNewFile: "Wähle eine neue Datei aus, um sie zu ersetzen.",
 		uploading: "Hochladen...",
 	},
 	org: {
 		title: "Organisation",
-		subtitle: "Zeigen Sie Details und Mitglieder Ihrer Organisation an",
+		subtitle: "Zeige Details und Mitglieder deiner Organisation an",
 		name: "Name",
 		createdAt: "Erstellt",
 		updatedAt: "Zuletzt aktualisiert",
@@ -105,8 +105,8 @@ const de: Partial<TranslationKeys> = {
 		readOnlyNotice:
 			"Diese Ansicht ist schreibgeschützt. Änderungen an der Organisation oder Benutzern müssen von einem Administrator vorgenommen werden.",
 		noOrgAccess:
-			"Sie haben keinen Zugriff auf eine Organisation. Bitte kontaktieren Sie einen Administrator.",
-		you: "Sie",
+			"Du hast keinen Zugriff auf eine Organisation. Bitte kontaktiere deinen Administrator.",
+		you: "Du",
 	},
 };
 
