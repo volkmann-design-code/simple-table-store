@@ -12,11 +12,19 @@ import type { DataStore, DataRecord, Organization, UserPublic } from '../types';
 
 export const viewRoutes = new Hono();
 
+// Get branding configuration from environment variables
+const getBrandingConfig = () => {
+  const logoUrl = process.env.LOGO_URL || '';
+  const appTitle = process.env.APP_TITLE || 'simple-table-store';
+  return { logoUrl, appTitle };
+};
+
 // Login page
 viewRoutes.get('/login', (c) => {
   const error = c.req.query('error');
   const lang = getLanguage(c);
-  return c.html(<LoginPage error={error} lang={lang} />);
+  const branding = getBrandingConfig();
+  return c.html(<LoginPage error={error} lang={lang} logoUrl={branding.logoUrl} appTitle={branding.appTitle} />);
 });
 
 // Handle form logout
@@ -50,7 +58,8 @@ viewRoutes.get('/', async (c) => {
   );
 
   const lang = getLanguage(c);
-  return c.html(<DashboardPage session={session} datastores={datastores} lang={lang} />);
+  const branding = getBrandingConfig();
+  return c.html(<DashboardPage session={session} datastores={datastores} lang={lang} logoUrl={branding.logoUrl} appTitle={branding.appTitle} />);
 });
 
 // Organization view
@@ -102,12 +111,15 @@ viewRoutes.get('/org', async (c) => {
   }
 
   const lang = getLanguage(c);
+  const branding = getBrandingConfig();
   return c.html(
     <OrgPage
       session={session}
       organization={result.organization}
       members={result.members}
       lang={lang}
+      logoUrl={branding.logoUrl}
+      appTitle={branding.appTitle}
     />
   );
 });
@@ -169,6 +181,7 @@ viewRoutes.get('/datastores/:slug', async (c) => {
   );
 
   const lang = getLanguage(c);
+  const branding = getBrandingConfig();
   return c.html(
     <DatastorePage
       session={session}
@@ -181,6 +194,8 @@ viewRoutes.get('/datastores/:slug', async (c) => {
         totalPages: Math.ceil(result.total / limit),
       }}
       lang={lang}
+      logoUrl={branding.logoUrl}
+      appTitle={branding.appTitle}
     />
   );
 });
