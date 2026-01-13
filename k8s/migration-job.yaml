@@ -8,7 +8,7 @@ spec:
     spec:
       containers:
         - name: migrate
-          image: datastore-app:latest
+          image: ghcr.io/volkmann-design-code/simple-table-store:0.1.0
           command: ["bun", "run", "src/db/migrate.ts"]
           env:
             - name: DATABASE_URL

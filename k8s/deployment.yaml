@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: datastore-app:latest
+          image: ghcr.io/volkmann-design-code/simple-table-store:0.1.0
           ports:
             - containerPort: 3000
           env:

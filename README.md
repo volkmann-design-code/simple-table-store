@@ -157,6 +157,22 @@ docker exec -it datastore-app-storage mc mb /data/datastore
 
 ### Application Container
 
+The application container image is publicly available on GitHub Container Registry:
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/volkmann-design-code/simple-table-store:0.1.0
+
+# Run container
+docker run -p 3000:3000 \
+  -e DATABASE_URL=postgresql://... \
+  -e ADMIN_TOKEN=... \
+  -e SESSION_SECRET=... \
+  ghcr.io/volkmann-design-code/simple-table-store:0.1.0
+```
+
+You can also build the image locally:
+
 ```bash
 # Build image
 docker build -t datastore-app .
