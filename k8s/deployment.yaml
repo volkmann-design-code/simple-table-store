@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: datastore-app
+  namespace: datastore-app
+  labels:
+    app: datastore-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: datastore-app
+  template:
+    metadata:
+      labels:
+        app: datastore-app
+    spec:
+      containers:
+        - name: app
+          image: datastore-app:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: datastore-app-secrets
+                  key: database-url
+            - name: ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: datastore-app-secrets
+                  key: admin-token
+            - name: SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: datastore-app-secrets
+                  key: session-secret
+            - name: S3_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: datastore-app-secrets
+                  key: s3-endpoint
+            - name: S3_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: datastore-app-secrets
+                  key: s3-region
+            - name: S3_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: datastore-app-secrets
+                  key: s3-bucket
+            - name: S3_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: datastore-app-secrets
+                  key: s3-access-key-id
+            - name: S3_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: datastore-app-secrets
+                  key: s3-secret-access-key
+            - name: S3_PATH_PREFIX
+              valueFrom:
+                secretKeyRef:
+                  name: datastore-app-secrets
+                  key: s3-path-prefix
+                  optional: true
+            - name: FILE_CACHE_MAX_MEMORY_BYTES
+              value: "104857600"
+            - name: FILE_CACHE_TTL_MS
+              value: "86400000"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: datastore-app
+  namespace: datastore-app
+spec:
+  selector:
+    app: datastore-app
+  ports:
+    - port: 80
+      targetPort: 3000
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: datastore-app
