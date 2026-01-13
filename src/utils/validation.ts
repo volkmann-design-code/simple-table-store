@@ -1,5 +1,6 @@
 import { t } from "../i18n";
 import type { ColumnDefinition } from "../types";
+import { FILE_PRESET_ACCEPT, matchesPreset } from "./file-presets";
 
 export interface ValidationError {
 	field: string;
@@ -177,20 +178,39 @@ export function validateRecordData(
 					});
 				}
 
-				// Validate content type if specified
-				if (column.validation?.allowedContentTypes && fileRef.content_type) {
-					if (
-						!column.validation.allowedContentTypes.includes(
-							fileRef.content_type,
-						)
-					) {
-						errors.push({
-							field: column.technical_name,
-							message: t(lang, "errors.invalidContentType", {
-								name: column.name,
-								allowed: column.validation.allowedContentTypes.join(", "),
-							}),
-						});
+				// Validate content type - explicit types take precedence over presets
+				if (fileRef.content_type) {
+					if (column.validation?.allowedContentTypes) {
+						// Explicit content types specified
+						if (
+							!column.validation.allowedContentTypes.includes(
+								fileRef.content_type,
+							)
+						) {
+							errors.push({
+								field: column.technical_name,
+								message: t(lang, "errors.invalidContentType", {
+									name: column.name,
+									allowed: column.validation.allowedContentTypes.join(", "),
+								}),
+							});
+						}
+					} else if (column.validation?.acceptPreset) {
+						// Validate against preset category
+						if (
+							!matchesPreset(
+								fileRef.content_type,
+								column.validation.acceptPreset,
+							)
+						) {
+							errors.push({
+								field: column.technical_name,
+								message: t(lang, "errors.invalidContentType", {
+									name: column.name,
+									allowed: FILE_PRESET_ACCEPT[column.validation.acceptPreset],
+								}),
+							});
+						}
 					}
 				}
 				break;

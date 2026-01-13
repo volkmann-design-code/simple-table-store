@@ -137,6 +137,58 @@ Use `X-API-Key` header for read-only access to records:
 curl -H "X-API-Key: dsk_..." https://datastore.example.com/api/datastores/my-store/records
 ```
 
+## Column Definitions
+
+Datastores use column definitions to define the schema for records. Each column has a type and optional validation rules.
+
+### Column Types
+
+| Type | Description |
+|------|-------------|
+| `text` | Plain text string |
+| `number` | Numeric value |
+| `boolean` | True/false value |
+| `date` | Date value (ISO 8601) |
+| `select` | Single selection from predefined options |
+| `file` | File upload with S3 storage |
+
+### File Type Presets
+
+For `file` type columns, you can use `acceptPreset` to restrict accepted file types using preset categories:
+
+| Preset | Accepted Types |
+|--------|---------------|
+| `images` | All image files (`image/*`) |
+| `videos` | All video files (`video/*`) |
+| `audio` | All audio files (`audio/*`) |
+| `documents` | PDF, Word, Excel, and text files |
+
+Example column definition with file preset:
+
+```json
+{
+  "name": "Profile Photo",
+  "technical_name": "profile_photo",
+  "type": "file",
+  "required": false,
+  "validation": {
+    "acceptPreset": "images",
+    "maxFileSize": 5242880
+  }
+}
+```
+
+You can also use explicit MIME types with `allowedContentTypes` (takes precedence over `acceptPreset`):
+
+```json
+{
+  "validation": {
+    "allowedContentTypes": ["image/jpeg", "image/png"],
+    "maxFileSize": 5242880
+  }
+}
+```
+
 ## Docker
 
 ### Development Services (Docker Compose)

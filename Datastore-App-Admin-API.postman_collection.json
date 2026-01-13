@@ -377,14 +377,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"org_id\": \"organization-uuid-here\",\n  \"name\": \"My DataStore\",\n  \"slug\": \"my-datastore\",\n  \"description\": \"A sample datastore\",\n  \"column_definitions\": [\n    {\n      \"name\": \"Name\",\n      \"technical_name\": \"name\",\n      \"type\": \"text\",\n      \"required\": true,\n      \"description\": \"The name of the item\"\n    },\n    {\n      \"name\": \"Age\",\n      \"technical_name\": \"age\",\n      \"type\": \"number\",\n      \"required\": false,\n      \"validation\": {\n        \"min\": 0,\n        \"max\": 150\n      }\n    },\n    {\n      \"name\": \"Active\",\n      \"technical_name\": \"active\",\n      \"type\": \"boolean\",\n      \"required\": false\n    },\n    {\n      \"name\": \"Status\",\n      \"technical_name\": \"status\",\n      \"type\": \"select\",\n      \"required\": true,\n      \"options\": [\"pending\", \"active\", \"inactive\"]\n    }\n  ]\n}"
+							"raw": "{\n  \"org_id\": \"organization-uuid-here\",\n  \"name\": \"My DataStore\",\n  \"slug\": \"my-datastore\",\n  \"description\": \"A sample datastore\",\n  \"column_definitions\": [\n    {\n      \"name\": \"Name\",\n      \"technical_name\": \"name\",\n      \"type\": \"text\",\n      \"required\": true,\n      \"description\": \"The name of the item\"\n    },\n    {\n      \"name\": \"Age\",\n      \"technical_name\": \"age\",\n      \"type\": \"number\",\n      \"required\": false,\n      \"validation\": {\n        \"min\": 0,\n        \"max\": 150\n      }\n    },\n    {\n      \"name\": \"Active\",\n      \"technical_name\": \"active\",\n      \"type\": \"boolean\",\n      \"required\": false\n    },\n    {\n      \"name\": \"Status\",\n      \"technical_name\": \"status\",\n      \"type\": \"select\",\n      \"required\": true,\n      \"options\": [\"pending\", \"active\", \"inactive\"]\n    },\n    {\n      \"name\": \"Profile Photo\",\n      \"technical_name\": \"profile_photo\",\n      \"type\": \"file\",\n      \"required\": false,\n      \"validation\": {\n        \"acceptPreset\": \"images\",\n        \"maxFileSize\": 5242880\n      }\n    },\n    {\n      \"name\": \"Video\",\n      \"technical_name\": \"video\",\n      \"type\": \"file\",\n      \"required\": false,\n      \"validation\": {\n        \"acceptPreset\": \"videos\",\n        \"maxFileSize\": 104857600\n      }\n    },\n    {\n      \"name\": \"Document\",\n      \"technical_name\": \"document\",\n      \"type\": \"file\",\n      \"required\": false,\n      \"validation\": {\n        \"allowedContentTypes\": [\"application/pdf\", \"application/msword\"],\n        \"maxFileSize\": 10485760\n      }\n    }\n  ]\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/admin/datastores",
 							"host": ["{{base_url}}"],
 							"path": ["admin", "datastores"]
 						},
-						"description": "Create a new datastore with column definitions. Column types: text, number, boolean, date, select"
+						"description": "Create a new datastore with column definitions.\n\nColumn types: text, number, boolean, date, select, file\n\nFor file columns:\n- Use `acceptPreset` for categories: \"images\", \"videos\", \"audio\", \"documents\"\n- Use `allowedContentTypes` for explicit MIME types (takes precedence over preset)\n- Use `maxFileSize` for size limit in bytes"
 					}
 				},
 				{
@@ -430,7 +430,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Updated DataStore Name\",\n  \"slug\": \"updated-slug\",\n  \"description\": \"Updated description\",\n  \"column_definitions\": [\n    {\n      \"name\": \"Name\",\n      \"technical_name\": \"name\",\n      \"type\": \"text\",\n      \"required\": true\n    }\n  ]\n}"
+							"raw": "{\n  \"name\": \"Updated DataStore Name\",\n  \"slug\": \"updated-slug\",\n  \"description\": \"Updated description\",\n  \"column_definitions\": [\n    {\n      \"name\": \"Name\",\n      \"technical_name\": \"name\",\n      \"type\": \"text\",\n      \"required\": true\n    },\n    {\n      \"name\": \"Avatar\",\n      \"technical_name\": \"avatar\",\n      \"type\": \"file\",\n      \"required\": false,\n      \"validation\": {\n        \"acceptPreset\": \"images\",\n        \"maxFileSize\": 2097152\n      }\n    }\n  ]\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/admin/datastores/:id",

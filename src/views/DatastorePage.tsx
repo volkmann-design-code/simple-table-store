@@ -1,6 +1,7 @@
 import type { FC } from "hono/jsx";
 import { t } from "../i18n";
 import type { DataRecord, DataStore, SessionPayload } from "../types";
+import { getAcceptAttribute } from "../utils/file-presets";
 import { Layout } from "./Layout";
 
 interface DatastorePageProps {
@@ -469,14 +470,29 @@ export const DatastorePage: FC<DatastorePageProps> = ({
               const progressBar = document.getElementById('file-progress-bar-' + fieldName);
               const progressText = document.getElementById('file-progress-text-' + fieldName);
               
+              // Initialize progress state
               if (progressContainer) progressContainer.classList.remove('hidden');
+              if (progressBar) progressBar.style.width = '0%';
+              if (progressText) progressText.textContent = '0%';
               
+              let lastUpdate = 0;
               xhr.upload.addEventListener('progress', (e) => {
                 if (e.lengthComputable) {
                   const percent = Math.round((e.loaded / e.total) * 100);
-                  if (progressBar) progressBar.style.width = percent + '%';
-                  if (progressText) progressText.textContent = percent + '%';
+                  // Throttle updates to every 50ms for smoother animation
+                  const now = Date.now();
+                  if (now - lastUpdate > 50 || percent === 100) {
+                    lastUpdate = now;
+                    if (progressBar) progressBar.style.width = percent + '%';
+                    if (progressText) progressText.textContent = percent + '%';
+                  }
                 }
+              });
+              
+              // Handle upload complete but waiting for server response
+              xhr.upload.addEventListener('load', () => {
+                if (progressBar) progressBar.style.width = '100%';
+                if (progressText) progressText.textContent = translations.uploading;
               });
               
               xhr.addEventListener('load', () => {
@@ -590,7 +606,8 @@ export const DatastorePage: FC<DatastorePageProps> = ({
                 throw new Error(error.error || error.details?.map(d => d.message).join(', ') || 'Failed to save record');
               }
               
-              // Success - reload page
+              // Success - reset form state before reload to ensure clean state
+              closeModal();
               window.location.reload();
               
             } catch (error) {
@@ -727,7 +744,10 @@ function renderInput(
 						name={col.technical_name}
 						id={`file-${col.technical_name}`}
 						class={baseClass}
-						accept={col.validation?.allowedContentTypes?.join(",")}
+						accept={getAcceptAttribute(
+							col.validation?.acceptPreset,
+							col.validation?.allowedContentTypes,
+						)}
 						data-max-size={col.validation?.maxFileSize}
 						data-required={col.required ? "true" : "false"}
 						onchange={`handleFileInput('${col.technical_name}')`}
@@ -745,7 +765,7 @@ function renderInput(
 							<div class="flex-1 h-2 bg-surface-700 rounded-full overflow-hidden">
 								<div
 									id={`file-progress-bar-${col.technical_name}`}
-									class="h-full bg-primary-500 transition-all duration-150"
+									class="h-full bg-primary-500 transition-[width] duration-75"
 									style="width: 0%"
 								></div>
 							</div>

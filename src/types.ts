@@ -22,6 +22,9 @@ export interface UserPublic {
 	updated_at: Date;
 }
 
+/** Preset categories for file type restrictions */
+export type FileAcceptPreset = "images" | "videos" | "audio" | "documents";
+
 export interface ColumnDefinition {
 	name: string;
 	technical_name: string;
@@ -34,7 +37,8 @@ export interface ColumnDefinition {
 		max?: number;
 		pattern?: string;
 		maxFileSize?: number; // For file type: max size in bytes
-		allowedContentTypes?: string[]; // For file type: allowed MIME types
+		allowedContentTypes?: string[]; // For file type: allowed MIME types (takes precedence over acceptPreset)
+		acceptPreset?: FileAcceptPreset; // For file type: preset category (images, videos, audio, documents)
 	};
 }
 
