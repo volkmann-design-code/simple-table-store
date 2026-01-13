@@ -1,604 +1,604 @@
 {
-  "info": {
-    "name": "Datastore App - Admin API",
-    "description": "Complete admin API collection for managing organizations, users, datastores, API keys, and migrations",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "variable": [
-    {
-      "key": "base_url",
-      "value": "http://localhost:3000",
-      "type": "string"
-    },
-    {
-      "key": "admin_token",
-      "value": "your-admin-token-here",
-      "type": "string"
-    }
-  ],
-  "item": [
-    {
-      "name": "Organizations",
-      "item": [
-        {
-          "name": "List Organizations",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/admin/orgs?page=1&limit=20",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "orgs"],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1",
-                  "description": "Page number (default: 1)"
-                },
-                {
-                  "key": "limit",
-                  "value": "20",
-                  "description": "Items per page (default: 20)"
-                }
-              ]
-            },
-            "description": "List all organizations with pagination"
-          }
-        },
-        {
-          "name": "Create Organization",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Example Organization\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/admin/orgs",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "orgs"]
-            },
-            "description": "Create a new organization"
-          }
-        },
-        {
-          "name": "Get Organization",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/admin/orgs/:id",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "orgs", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "organization-uuid-here"
-                }
-              ]
-            },
-            "description": "Get a specific organization by ID"
-          }
-        },
-        {
-          "name": "Update Organization",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Organization Name\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/admin/orgs/:id",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "orgs", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "organization-uuid-here"
-                }
-              ]
-            },
-            "description": "Update an organization"
-          }
-        },
-        {
-          "name": "Delete Organization",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/admin/orgs/:id",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "orgs", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "organization-uuid-here"
-                }
-              ]
-            },
-            "description": "Delete an organization (cascades to users and datastores)"
-          }
-        }
-      ]
-    },
-    {
-      "name": "Users",
-      "item": [
-        {
-          "name": "List Users",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/admin/users?page=1&limit=20&org_id=",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "users"],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1",
-                  "description": "Page number (default: 1)"
-                },
-                {
-                  "key": "limit",
-                  "value": "20",
-                  "description": "Items per page (default: 20)"
-                },
-                {
-                  "key": "org_id",
-                  "value": "",
-                  "description": "Optional: Filter by organization ID",
-                  "disabled": true
-                }
-              ]
-            },
-            "description": "List all users with optional organization filter"
-          }
-        },
-        {
-          "name": "Create User",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"secure-password-123\",\n  \"org_id\": \"organization-uuid-here\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/admin/users",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "users"]
-            },
-            "description": "Create a new user"
-          }
-        },
-        {
-          "name": "Get User",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/admin/users/:id",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "users", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "user-uuid-here"
-                }
-              ]
-            },
-            "description": "Get a specific user by ID"
-          }
-        },
-        {
-          "name": "Update User",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"updated@example.com\",\n  \"password\": \"new-password-123\",\n  \"org_id\": \"organization-uuid-here\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/admin/users/:id",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "users", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "user-uuid-here"
-                }
-              ]
-            },
-            "description": "Update a user (all fields optional, password only updated if provided)"
-          }
-        },
-        {
-          "name": "Delete User",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/admin/users/:id",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "users", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "user-uuid-here"
-                }
-              ]
-            },
-            "description": "Delete a user"
-          }
-        }
-      ]
-    },
-    {
-      "name": "DataStores",
-      "item": [
-        {
-          "name": "List DataStores",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/admin/datastores?page=1&limit=20&org_id=",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "datastores"],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1",
-                  "description": "Page number (default: 1)"
-                },
-                {
-                  "key": "limit",
-                  "value": "20",
-                  "description": "Items per page (default: 20)"
-                },
-                {
-                  "key": "org_id",
-                  "value": "",
-                  "description": "Optional: Filter by organization ID",
-                  "disabled": true
-                }
-              ]
-            },
-            "description": "List all datastores with optional organization filter"
-          }
-        },
-        {
-          "name": "Create DataStore",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"org_id\": \"organization-uuid-here\",\n  \"name\": \"My DataStore\",\n  \"slug\": \"my-datastore\",\n  \"description\": \"A sample datastore\",\n  \"column_definitions\": [\n    {\n      \"name\": \"Name\",\n      \"technical_name\": \"name\",\n      \"type\": \"text\",\n      \"required\": true,\n      \"description\": \"The name of the item\"\n    },\n    {\n      \"name\": \"Age\",\n      \"technical_name\": \"age\",\n      \"type\": \"number\",\n      \"required\": false,\n      \"validation\": {\n        \"min\": 0,\n        \"max\": 150\n      }\n    },\n    {\n      \"name\": \"Active\",\n      \"technical_name\": \"active\",\n      \"type\": \"boolean\",\n      \"required\": false\n    },\n    {\n      \"name\": \"Status\",\n      \"technical_name\": \"status\",\n      \"type\": \"select\",\n      \"required\": true,\n      \"options\": [\"pending\", \"active\", \"inactive\"]\n    }\n  ]\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/admin/datastores",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "datastores"]
-            },
-            "description": "Create a new datastore with column definitions. Column types: text, number, boolean, date, select"
-          }
-        },
-        {
-          "name": "Get DataStore",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/admin/datastores/:id",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "datastores", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "datastore-uuid-here"
-                }
-              ]
-            },
-            "description": "Get a specific datastore by ID"
-          }
-        },
-        {
-          "name": "Update DataStore",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated DataStore Name\",\n  \"slug\": \"updated-slug\",\n  \"description\": \"Updated description\",\n  \"column_definitions\": [\n    {\n      \"name\": \"Name\",\n      \"technical_name\": \"name\",\n      \"type\": \"text\",\n      \"required\": true\n    }\n  ]\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/admin/datastores/:id",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "datastores", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "datastore-uuid-here"
-                }
-              ]
-            },
-            "description": "Update a datastore (all fields optional)"
-          }
-        },
-        {
-          "name": "Delete DataStore",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/admin/datastores/:id",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "datastores", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "datastore-uuid-here"
-                }
-              ]
-            },
-            "description": "Delete a datastore (cascades to all records)"
-          }
-        }
-      ]
-    },
-    {
-      "name": "API Keys",
-      "item": [
-        {
-          "name": "List API Keys",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/admin/api-keys?datastore_id=datastore-uuid-here",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "api-keys"],
-              "query": [
-                {
-                  "key": "datastore_id",
-                  "value": "datastore-uuid-here",
-                  "description": "DataStore ID (required)"
-                }
-              ]
-            },
-            "description": "List all API keys for a specific datastore"
-          }
-        },
-        {
-          "name": "Create API Key",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"datastore_id\": \"datastore-uuid-here\",\n  \"name\": \"Production API Key\",\n  \"expires_at\": \"2025-12-31T23:59:59Z\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/admin/api-keys",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "api-keys"]
-            },
-            "description": "Create a new API key. The plaintext key is only returned once on creation. expires_at is optional (ISO 8601 format)."
-          }
-        },
-        {
-          "name": "Delete API Key",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/admin/api-keys/:id",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "api-keys", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "apikey-uuid-here"
-                }
-              ]
-            },
-            "description": "Delete/revoke an API key"
-          }
-        }
-      ]
-    },
-    {
-      "name": "Migrations",
-      "item": [
-        {
-          "name": "Get Migration Status",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/admin/migrate/status",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "migrate", "status"]
-            },
-            "description": "Get the status of all database migrations"
-          }
-        },
-        {
-          "name": "Run Migrations",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/admin/migrate",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "migrate"]
-            },
-            "description": "Run all pending database migrations"
-          }
-        }
-      ]
-    }
-  ]
+	"info": {
+		"name": "Datastore App - Admin API",
+		"description": "Complete admin API collection for managing organizations, users, datastores, API keys, and migrations",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "admin_token",
+			"value": "your-admin-token-here",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Organizations",
+			"item": [
+				{
+					"name": "List Organizations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/orgs?page=1&limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "orgs"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number (default: 1)"
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Items per page (default: 20)"
+								}
+							]
+						},
+						"description": "List all organizations with pagination"
+					}
+				},
+				{
+					"name": "Create Organization",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Example Organization\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/orgs",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "orgs"]
+						},
+						"description": "Create a new organization"
+					}
+				},
+				{
+					"name": "Get Organization",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/orgs/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "orgs", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "organization-uuid-here"
+								}
+							]
+						},
+						"description": "Get a specific organization by ID"
+					}
+				},
+				{
+					"name": "Update Organization",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated Organization Name\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/orgs/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "orgs", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "organization-uuid-here"
+								}
+							]
+						},
+						"description": "Update an organization"
+					}
+				},
+				{
+					"name": "Delete Organization",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/orgs/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "orgs", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "organization-uuid-here"
+								}
+							]
+						},
+						"description": "Delete an organization (cascades to users and datastores)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "List Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/users?page=1&limit=20&org_id=",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "users"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number (default: 1)"
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Items per page (default: 20)"
+								},
+								{
+									"key": "org_id",
+									"value": "",
+									"description": "Optional: Filter by organization ID",
+									"disabled": true
+								}
+							]
+						},
+						"description": "List all users with optional organization filter"
+					}
+				},
+				{
+					"name": "Create User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"secure-password-123\",\n  \"org_id\": \"organization-uuid-here\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/users",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "users"]
+						},
+						"description": "Create a new user"
+					}
+				},
+				{
+					"name": "Get User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/users/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "users", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "user-uuid-here"
+								}
+							]
+						},
+						"description": "Get a specific user by ID"
+					}
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"updated@example.com\",\n  \"password\": \"new-password-123\",\n  \"org_id\": \"organization-uuid-here\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/users/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "users", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "user-uuid-here"
+								}
+							]
+						},
+						"description": "Update a user (all fields optional, password only updated if provided)"
+					}
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/users/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "users", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "user-uuid-here"
+								}
+							]
+						},
+						"description": "Delete a user"
+					}
+				}
+			]
+		},
+		{
+			"name": "DataStores",
+			"item": [
+				{
+					"name": "List DataStores",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/datastores?page=1&limit=20&org_id=",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "datastores"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number (default: 1)"
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Items per page (default: 20)"
+								},
+								{
+									"key": "org_id",
+									"value": "",
+									"description": "Optional: Filter by organization ID",
+									"disabled": true
+								}
+							]
+						},
+						"description": "List all datastores with optional organization filter"
+					}
+				},
+				{
+					"name": "Create DataStore",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"org_id\": \"organization-uuid-here\",\n  \"name\": \"My DataStore\",\n  \"slug\": \"my-datastore\",\n  \"description\": \"A sample datastore\",\n  \"column_definitions\": [\n    {\n      \"name\": \"Name\",\n      \"technical_name\": \"name\",\n      \"type\": \"text\",\n      \"required\": true,\n      \"description\": \"The name of the item\"\n    },\n    {\n      \"name\": \"Age\",\n      \"technical_name\": \"age\",\n      \"type\": \"number\",\n      \"required\": false,\n      \"validation\": {\n        \"min\": 0,\n        \"max\": 150\n      }\n    },\n    {\n      \"name\": \"Active\",\n      \"technical_name\": \"active\",\n      \"type\": \"boolean\",\n      \"required\": false\n    },\n    {\n      \"name\": \"Status\",\n      \"technical_name\": \"status\",\n      \"type\": \"select\",\n      \"required\": true,\n      \"options\": [\"pending\", \"active\", \"inactive\"]\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/datastores",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "datastores"]
+						},
+						"description": "Create a new datastore with column definitions. Column types: text, number, boolean, date, select"
+					}
+				},
+				{
+					"name": "Get DataStore",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/datastores/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "datastores", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "datastore-uuid-here"
+								}
+							]
+						},
+						"description": "Get a specific datastore by ID"
+					}
+				},
+				{
+					"name": "Update DataStore",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated DataStore Name\",\n  \"slug\": \"updated-slug\",\n  \"description\": \"Updated description\",\n  \"column_definitions\": [\n    {\n      \"name\": \"Name\",\n      \"technical_name\": \"name\",\n      \"type\": \"text\",\n      \"required\": true\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/datastores/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "datastores", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "datastore-uuid-here"
+								}
+							]
+						},
+						"description": "Update a datastore (all fields optional)"
+					}
+				},
+				{
+					"name": "Delete DataStore",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/datastores/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "datastores", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "datastore-uuid-here"
+								}
+							]
+						},
+						"description": "Delete a datastore (cascades to all records)"
+					}
+				}
+			]
+		},
+		{
+			"name": "API Keys",
+			"item": [
+				{
+					"name": "List API Keys",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/api-keys?datastore_id=datastore-uuid-here",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "api-keys"],
+							"query": [
+								{
+									"key": "datastore_id",
+									"value": "datastore-uuid-here",
+									"description": "DataStore ID (required)"
+								}
+							]
+						},
+						"description": "List all API keys for a specific datastore"
+					}
+				},
+				{
+					"name": "Create API Key",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"datastore_id\": \"datastore-uuid-here\",\n  \"name\": \"Production API Key\",\n  \"expires_at\": \"2025-12-31T23:59:59Z\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/api-keys",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "api-keys"]
+						},
+						"description": "Create a new API key. The plaintext key is only returned once on creation. expires_at is optional (ISO 8601 format)."
+					}
+				},
+				{
+					"name": "Delete API Key",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/api-keys/:id",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "api-keys", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "apikey-uuid-here"
+								}
+							]
+						},
+						"description": "Delete/revoke an API key"
+					}
+				}
+			]
+		},
+		{
+			"name": "Migrations",
+			"item": [
+				{
+					"name": "Get Migration Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/migrate/status",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "migrate", "status"]
+						},
+						"description": "Get the status of all database migrations"
+					}
+				},
+				{
+					"name": "Run Migrations",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/migrate",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "migrate"]
+						},
+						"description": "Run all pending database migrations"
+					}
+				}
+			]
+		}
+	]
 }

@@ -1,231 +1,392 @@
-import type { FC } from 'hono/jsx';
-import { Layout } from './Layout';
-import { t } from '../i18n';
-import type { DataStore, DataRecord, SessionPayload } from '../types';
+import type { FC } from "hono/jsx";
+import { t } from "../i18n";
+import type { DataRecord, DataStore, SessionPayload } from "../types";
+import { Layout } from "./Layout";
 
 interface DatastorePageProps {
-  session: SessionPayload;
-  datastore: DataStore;
-  records: DataRecord[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-  lang?: string;
-  logoUrl?: string;
-  appTitle?: string;
+	session: SessionPayload;
+	datastore: DataStore;
+	records: DataRecord[];
+	pagination: {
+		page: number;
+		limit: number;
+		total: number;
+		totalPages: number;
+	};
+	lang?: string;
+	logoUrl?: string;
+	appTitle?: string;
 }
 
 const DefaultLogoIcon = () => (
-  <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
-  </svg>
+	<svg
+		class="w-4 h-4 text-white"
+		fill="none"
+		stroke="currentColor"
+		viewBox="0 0 24 24"
+	>
+		<path
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			stroke-width="2"
+			d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
+		/>
+	</svg>
 );
 
-export const DatastorePage: FC<DatastorePageProps> = ({ session, datastore, records, pagination, lang = 'en', logoUrl, appTitle = 'Datastore' }) => {
-  const columns = datastore.column_definitions;
-  const langCode = lang as 'en' | 'de';
+export const DatastorePage: FC<DatastorePageProps> = ({
+	session,
+	datastore,
+	records,
+	pagination,
+	lang = "en",
+	logoUrl,
+	appTitle = "Datastore",
+}) => {
+	const columns = datastore.column_definitions;
+	const langCode = lang as "en" | "de";
 
-  return (
-    <Layout title={`${datastore.name} - ${appTitle}`} lang={lang} appTitle={appTitle}>
-      <div class="min-h-screen">
-        {/* Header */}
-        <header class="border-b border-surface-800 bg-surface-900/50 backdrop-blur-sm sticky top-0 z-10">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-              <div class="flex items-center gap-3">
-                <a href="/" class={logoUrl ? "w-8 h-8 hover:opacity-80 transition-opacity" : "w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center hover:opacity-80 transition-opacity"}>
-                  {logoUrl ? (
-                    <img src={logoUrl} alt={appTitle} class="w-full h-full object-cover rounded-lg" />
-                  ) : (
-                    <DefaultLogoIcon />
-                  )}
-                </a>
-                <span class="text-surface-500">/</span>
-                <span class="font-semibold text-surface-100">{datastore.name}</span>
-              </div>
+	return (
+		<Layout
+			title={`${datastore.name} - ${appTitle}`}
+			lang={lang}
+			appTitle={appTitle}
+		>
+			<div class="min-h-screen">
+				{/* Header */}
+				<header class="border-b border-surface-800 bg-surface-900/50 backdrop-blur-sm sticky top-0 z-10">
+					<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+						<div class="flex items-center justify-between h-16">
+							<div class="flex items-center gap-3">
+								<a
+									href="/"
+									class={
+										logoUrl
+											? "w-8 h-8 hover:opacity-80 transition-opacity"
+											: "w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center hover:opacity-80 transition-opacity"
+									}
+								>
+									{logoUrl ? (
+										<img
+											src={logoUrl}
+											alt={appTitle}
+											class="w-full h-full object-cover rounded-lg"
+										/>
+									) : (
+										<DefaultLogoIcon />
+									)}
+								</a>
+								<span class="text-surface-500">/</span>
+								<span class="font-semibold text-surface-100">
+									{datastore.name}
+								</span>
+							</div>
 
-              <div class="flex items-center gap-4">
-                <a href="/org" class="text-sm text-surface-400 hover:text-surface-200 transition-colors">
-                  {t(langCode, 'org.title')}
-                </a>
-                <span class="text-sm text-surface-400">{session.email}</span>
-                <form method="post" action="/auth/logout">
-                  <button type="submit" class="text-sm text-surface-400 hover:text-surface-200 transition-colors">
-                    {t(langCode, 'common.signOut')}
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
-        </header>
+							<div class="flex items-center gap-4">
+								<a
+									href="/org"
+									class="text-sm text-surface-400 hover:text-surface-200 transition-colors"
+								>
+									{t(langCode, "org.title")}
+								</a>
+								<span class="text-sm text-surface-400">{session.email}</span>
+								<form method="post" action="/auth/logout">
+									<button
+										type="submit"
+										class="text-sm text-surface-400 hover:text-surface-200 transition-colors"
+									>
+										{t(langCode, "common.signOut")}
+									</button>
+								</form>
+							</div>
+						</div>
+					</div>
+				</header>
 
-        {/* Main Content */}
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <div class="flex items-center gap-2">
-                <a href="/" class="text-surface-400 hover:text-surface-200 transition-colors">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </a>
-                <h1 class="text-2xl font-bold text-surface-100">{datastore.name}</h1>
-              </div>
-              {datastore.description && (
-                <p class="text-surface-400 mt-1">{datastore.description}</p>
-              )}
-            </div>
-            <button
-              type="button"
-              class="btn btn-primary"
-              onclick="document.getElementById('create-modal').classList.remove('hidden')"
-            >
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
-              {t(langCode, 'datastore.addRecord')}
-            </button>
-          </div>
+				{/* Main Content */}
+				<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+					<div class="flex items-center justify-between mb-6">
+						<div>
+							<div class="flex items-center gap-2">
+								<a
+									href="/"
+									class="text-surface-400 hover:text-surface-200 transition-colors"
+								>
+									<svg
+										class="w-5 h-5"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M15 19l-7-7 7-7"
+										/>
+									</svg>
+								</a>
+								<h1 class="text-2xl font-bold text-surface-100">
+									{datastore.name}
+								</h1>
+							</div>
+							{datastore.description && (
+								<p class="text-surface-400 mt-1">{datastore.description}</p>
+							)}
+						</div>
+						<button
+							type="button"
+							class="btn btn-primary"
+							onclick="document.getElementById('create-modal').classList.remove('hidden')"
+						>
+							<svg
+								class="w-4 h-4 mr-2"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M12 4v16m8-8H4"
+								/>
+							</svg>
+							{t(langCode, "datastore.addRecord")}
+						</button>
+					</div>
 
-          {/* Records Table */}
-          <div class="card p-0 overflow-hidden">
-            <div class="overflow-x-auto">
-              <table class="w-full">
-                <thead>
-                  <tr class="border-b border-surface-700">
-                    {columns.map((col) => (
-                      <th class="table-header">{col.name}</th>
-                    ))}
-                    <th class="table-header w-20">{t(langCode, 'common.actions')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {records.length === 0 ? (
-                    <tr>
-                      <td colspan={columns.length + 1} class="table-cell text-center text-surface-400 py-12">
-                        {t(langCode, 'datastore.noRecords')}
-                      </td>
-                    </tr>
-                  ) : (
-                    records.map((record) => (
-                      <tr class="border-b border-surface-800 hover:bg-surface-800/30 transition-colors">
-                        {columns.map((col) => (
-                          <td class="table-cell text-surface-200">
-                            {formatValue(record.data[col.technical_name], col.type)}
-                          </td>
-                        ))}
-                        <td class="table-cell">
-                          <div class="flex items-center gap-2">
-                            <button
-                              type="button"
-                              class="p-1.5 text-surface-400 hover:text-primary-400 hover:bg-surface-700 rounded transition-colors"
-                              onclick={`openEditModal('${record.id}', ${JSON.stringify(record.data).replace(/'/g, "\\'")})`}
-                              title={t(langCode, 'common.edit')}
-                            >
-                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                            </button>
-                            <button
-                              type="button"
-                              class="p-1.5 text-surface-400 hover:text-red-400 hover:bg-surface-700 rounded transition-colors"
-                              onclick={`deleteRecord('${record.id}')`}
-                              title={t(langCode, 'common.delete')}
-                            >
-                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+					{/* Records Table */}
+					<div class="card p-0 overflow-hidden">
+						<div class="overflow-x-auto">
+							<table class="w-full">
+								<thead>
+									<tr class="border-b border-surface-700">
+										{columns.map((col) => (
+											<th class="table-header">{col.name}</th>
+										))}
+										<th class="table-header w-20">
+											{t(langCode, "common.actions")}
+										</th>
+									</tr>
+								</thead>
+								<tbody>
+									{records.length === 0 ? (
+										<tr>
+											<td
+												colspan={columns.length + 1}
+												class="table-cell text-center text-surface-400 py-12"
+											>
+												{t(langCode, "datastore.noRecords")}
+											</td>
+										</tr>
+									) : (
+										records.map((record) => (
+											<tr class="border-b border-surface-800 hover:bg-surface-800/30 transition-colors">
+												{columns.map((col) => (
+													<td class="table-cell text-surface-200">
+														{formatValue(
+															record.data[col.technical_name],
+															col.type,
+														)}
+													</td>
+												))}
+												<td class="table-cell">
+													<div class="flex items-center gap-2">
+														<button
+															type="button"
+															class="p-1.5 text-surface-400 hover:text-primary-400 hover:bg-surface-700 rounded transition-colors"
+															onclick={`openEditModal('${record.id}', ${JSON.stringify(record.data).replace(/'/g, "\\'")})`}
+															title={t(langCode, "common.edit")}
+														>
+															<svg
+																class="w-4 h-4"
+																fill="none"
+																stroke="currentColor"
+																viewBox="0 0 24 24"
+															>
+																<path
+																	stroke-linecap="round"
+																	stroke-linejoin="round"
+																	stroke-width="2"
+																	d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+																/>
+															</svg>
+														</button>
+														<button
+															type="button"
+															class="p-1.5 text-surface-400 hover:text-red-400 hover:bg-surface-700 rounded transition-colors"
+															onclick={`deleteRecord('${record.id}')`}
+															title={t(langCode, "common.delete")}
+														>
+															<svg
+																class="w-4 h-4"
+																fill="none"
+																stroke="currentColor"
+																viewBox="0 0 24 24"
+															>
+																<path
+																	stroke-linecap="round"
+																	stroke-linejoin="round"
+																	stroke-width="2"
+																	d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+																/>
+															</svg>
+														</button>
+													</div>
+												</td>
+											</tr>
+										))
+									)}
+								</tbody>
+							</table>
+						</div>
 
-            {/* Pagination */}
-            {pagination.totalPages > 1 && (
-              <div class="flex items-center justify-between px-4 py-3 border-t border-surface-800">
-                <span class="text-sm text-surface-400">
-                  {t(langCode, 'common.showing')} {(pagination.page - 1) * pagination.limit + 1} {t(langCode, 'common.to')} {Math.min(pagination.page * pagination.limit, pagination.total)} {t(langCode, 'common.of')} {pagination.total}
-                </span>
-                <div class="flex gap-2">
-                  {pagination.page > 1 && (
-                    <a href={`?page=${pagination.page - 1}`} class="btn btn-secondary text-sm">{t(langCode, 'common.previous')}</a>
-                  )}
-                  {pagination.page < pagination.totalPages && (
-                    <a href={`?page=${pagination.page + 1}`} class="btn btn-secondary text-sm">{t(langCode, 'common.next')}</a>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </main>
+						{/* Pagination */}
+						{pagination.totalPages > 1 && (
+							<div class="flex items-center justify-between px-4 py-3 border-t border-surface-800">
+								<span class="text-sm text-surface-400">
+									{t(langCode, "common.showing")}{" "}
+									{(pagination.page - 1) * pagination.limit + 1}{" "}
+									{t(langCode, "common.to")}{" "}
+									{Math.min(
+										pagination.page * pagination.limit,
+										pagination.total,
+									)}{" "}
+									{t(langCode, "common.of")} {pagination.total}
+								</span>
+								<div class="flex gap-2">
+									{pagination.page > 1 && (
+										<a
+											href={`?page=${pagination.page - 1}`}
+											class="btn btn-secondary text-sm"
+										>
+											{t(langCode, "common.previous")}
+										</a>
+									)}
+									{pagination.page < pagination.totalPages && (
+										<a
+											href={`?page=${pagination.page + 1}`}
+											class="btn btn-secondary text-sm"
+										>
+											{t(langCode, "common.next")}
+										</a>
+									)}
+								</div>
+							</div>
+						)}
+					</div>
+				</main>
 
-        {/* Create/Edit Modal */}
-        <div id="create-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div class="card w-full max-w-lg mx-4">
-            <div class="flex items-center justify-between mb-4">
-              <h2 id="modal-title" class="text-lg font-semibold text-surface-100">{t(langCode, 'datastore.addRecord')}</h2>
-              <button type="button" onclick="closeModal()" class="p-1 text-surface-400 hover:text-surface-200">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <form id="record-form" onsubmit="return handleFormSubmit(event)">
-              <input type="hidden" id="record-id" value="" />
-              <input type="hidden" id="form-method" value="POST" />
-              <div id="form-error" class="hidden mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm"></div>
-              <div class="space-y-4">
-                {columns.map((col) => (
-                  <div>
-                    <label class="block text-sm font-medium text-surface-300 mb-1.5">
-                      {col.name}
-                      {col.required && <span class="text-red-400 ml-1">*</span>}
-                    </label>
-                    {renderInput(col, datastore.slug, langCode)}
-                    {col.description && (
-                      <p class="text-xs text-surface-500 mt-1">{col.description}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-              <div class="flex justify-end gap-3 mt-6">
-                <button type="button" onclick="closeModal()" class="btn btn-secondary">{t(langCode, 'common.cancel')}</button>
-                <button type="submit" id="submit-btn" class="btn btn-primary">
-                  <span id="submit-text">{t(langCode, 'common.save')}</span>
-                  <span id="submit-loading" class="hidden">
-                    <svg class="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    {t(langCode, 'common.saving')}
-                  </span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+				{/* Create/Edit Modal */}
+				<div
+					id="create-modal"
+					class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+				>
+					<div class="card w-full max-w-lg mx-4">
+						<div class="flex items-center justify-between mb-4">
+							<h2
+								id="modal-title"
+								class="text-lg font-semibold text-surface-100"
+							>
+								{t(langCode, "datastore.addRecord")}
+							</h2>
+							<button
+								type="button"
+								onclick="closeModal()"
+								class="p-1 text-surface-400 hover:text-surface-200"
+							>
+								<svg
+									class="w-5 h-5"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M6 18L18 6M6 6l12 12"
+									/>
+								</svg>
+							</button>
+						</div>
+						<form id="record-form" onsubmit="return handleFormSubmit(event)">
+							<input type="hidden" id="record-id" value="" />
+							<input type="hidden" id="form-method" value="POST" />
+							<div
+								id="form-error"
+								class="hidden mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm"
+							></div>
+							<div class="space-y-4">
+								{columns.map((col) => (
+									<div>
+										<label class="block text-sm font-medium text-surface-300 mb-1.5">
+											{col.name}
+											{col.required && <span class="text-red-400 ml-1">*</span>}
+										</label>
+										{renderInput(col, datastore.slug, langCode)}
+										{col.description && (
+											<p class="text-xs text-surface-500 mt-1">
+												{col.description}
+											</p>
+										)}
+									</div>
+								))}
+							</div>
+							<div class="flex justify-end gap-3 mt-6">
+								<button
+									type="button"
+									onclick="closeModal()"
+									class="btn btn-secondary"
+								>
+									{t(langCode, "common.cancel")}
+								</button>
+								<button type="submit" id="submit-btn" class="btn btn-primary">
+									<span id="submit-text">{t(langCode, "common.save")}</span>
+									<span id="submit-loading" class="hidden">
+										<svg
+											class="animate-spin h-4 w-4 mr-2"
+											fill="none"
+											viewBox="0 0 24 24"
+										>
+											<circle
+												class="opacity-25"
+												cx="12"
+												cy="12"
+												r="10"
+												stroke="currentColor"
+												stroke-width="4"
+											></circle>
+											<path
+												class="opacity-75"
+												fill="currentColor"
+												d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+											></path>
+										</svg>
+										{t(langCode, "common.saving")}
+									</span>
+								</button>
+							</div>
+						</form>
+					</div>
+				</div>
 
-        {/* Scripts for modal handling */}
-        <script dangerouslySetInnerHTML={{ __html: `
+				{/* Scripts for modal handling */}
+				<script
+					dangerouslySetInnerHTML={{
+						__html: `
           const DATASTORE_SLUG = '${datastore.slug}';
-          const FILE_COLUMNS = ${JSON.stringify(columns.filter(c => c.type === 'file').map(c => c.technical_name))};
+          const FILE_COLUMNS = ${JSON.stringify(columns.filter((c) => c.type === "file").map((c) => c.technical_name))};
           const EXISTING_FILE_REFS = {};
           
           const translations = {
-            addRecord: '${t(langCode, 'datastore.addRecord')}',
-            editRecord: '${t(langCode, 'datastore.editRecord')}',
-            currentFile: '${t(langCode, 'datastore.currentFile')}',
-            selectNewFile: '${t(langCode, 'datastore.selectNewFile')}',
-            deleteConfirm: '${t(langCode, 'datastore.deleteConfirm')}',
-            uploading: '${t(langCode, 'datastore.uploading') || 'Uploading...'}',
+            addRecord: '${t(langCode, "datastore.addRecord")}',
+            editRecord: '${t(langCode, "datastore.editRecord")}',
+            currentFile: '${t(langCode, "datastore.currentFile")}',
+            selectNewFile: '${t(langCode, "datastore.selectNewFile")}',
+            deleteConfirm: '${t(langCode, "datastore.deleteConfirm")}',
+            uploading: '${t(langCode, "datastore.uploading") || "Uploading..."}',
           };
           
           function formatBytes(bytes) {
@@ -469,107 +630,144 @@ export const DatastorePage: FC<DatastorePageProps> = ({ session, datastore, reco
           document.getElementById('create-modal').addEventListener('click', (e) => {
             if (e.target === e.currentTarget) closeModal();
           });
-        ` }} />
-      </div>
-    </Layout>
-  );
+        `,
+					}}
+				/>
+			</div>
+		</Layout>
+	);
 };
 
 function formatValue(value: unknown, type: string): string | any {
-  if (value === null || value === undefined) return '-';
-  if (type === 'boolean') return value ? '✓' : '✗';
-  if (type === 'date') {
-    const date = new Date(value as string);
-    return isNaN(date.getTime()) ? String(value) : date.toLocaleDateString();
-  }
-  if (type === 'file' && typeof value === 'object' && value !== null && 'file_id' in value) {
-    const fileRef = value as { filename?: string; url?: string };
-    return (
-      <a href={fileRef.url || '#'} class="text-primary-400 hover:text-primary-300 underline" target="_blank" rel="noopener noreferrer">
-        {fileRef.filename || 'File'}
-      </a>
-    );
-  }
-  return String(value);
+	if (value === null || value === undefined) return "-";
+	if (type === "boolean") return value ? "✓" : "✗";
+	if (type === "date") {
+		const date = new Date(value as string);
+		return Number.isNaN(date.getTime())
+			? String(value)
+			: date.toLocaleDateString();
+	}
+	if (
+		type === "file" &&
+		typeof value === "object" &&
+		value !== null &&
+		"file_id" in value
+	) {
+		const fileRef = value as { filename?: string; url?: string };
+		return (
+			<a
+				href={fileRef.url || "#"}
+				class="text-primary-400 hover:text-primary-300 underline"
+				target="_blank"
+				rel="noopener noreferrer"
+			>
+				{fileRef.filename || "File"}
+			</a>
+		);
+	}
+	return String(value);
 }
 
-function renderInput(col: DataStore['column_definitions'][0], slug: string, lang: 'en' | 'de') {
-  const baseClass = 'input';
-  const required = col.required ? 'required' : '';
+function renderInput(
+	col: DataStore["column_definitions"][0],
+	_slug: string,
+	lang: "en" | "de",
+) {
+	const baseClass = "input";
+	const _required = col.required ? "required" : "";
 
-  switch (col.type) {
-    case 'boolean':
-      return (
-        <input
-          type="checkbox"
-          name={col.technical_name}
-          class="w-4 h-4 rounded border-surface-600 bg-surface-800 text-primary-500 focus:ring-primary-500"
-        />
-      );
-    case 'number':
-      return (
-        <input
-          type="number"
-          name={col.technical_name}
-          class={baseClass}
-          min={col.validation?.min}
-          max={col.validation?.max}
-          required={col.required}
-          step="any"
-        />
-      );
-    case 'date':
-      return (
-        <input
-          type="date"
-          name={col.technical_name}
-          class={baseClass}
-          required={col.required}
-        />
-      );
-    case 'select':
-      return (
-        <select name={col.technical_name} class={baseClass} required={col.required}>
-          <option value="">{t(lang, 'common.select')}</option>
-          {col.options?.map((opt) => (
-            <option value={opt}>{opt}</option>
-          ))}
-        </select>
-      );
-    case 'file':
-      return (
-        <div>
-          <input
-            type="file"
-            name={col.technical_name}
-            id={`file-${col.technical_name}`}
-            class={baseClass}
-            accept={col.validation?.allowedContentTypes?.join(',')}
-            data-max-size={col.validation?.maxFileSize}
-            data-required={col.required ? 'true' : 'false'}
-            onchange={`handleFileInput('${col.technical_name}')`}
-          />
-          <div id={`file-preview-${col.technical_name}`} class="mt-2 text-sm text-surface-400"></div>
-          <div id={`file-current-${col.technical_name}`} class="mt-2 text-sm text-surface-400"></div>
-          <div id={`file-progress-${col.technical_name}`} class="hidden mt-2">
-            <div class="flex items-center gap-2">
-              <div class="flex-1 h-2 bg-surface-700 rounded-full overflow-hidden">
-                <div id={`file-progress-bar-${col.technical_name}`} class="h-full bg-primary-500 transition-all duration-150" style="width: 0%"></div>
-              </div>
-              <span id={`file-progress-text-${col.technical_name}`} class="text-xs text-surface-400 w-12 text-right">0%</span>
-            </div>
-          </div>
-        </div>
-      );
-    default:
-      return (
-        <input
-          type="text"
-          name={col.technical_name}
-          class={baseClass}
-          pattern={col.validation?.pattern}
-          required={col.required}
-        />
-      );
-  }
+	switch (col.type) {
+		case "boolean":
+			return (
+				<input
+					type="checkbox"
+					name={col.technical_name}
+					class="w-4 h-4 rounded border-surface-600 bg-surface-800 text-primary-500 focus:ring-primary-500"
+				/>
+			);
+		case "number":
+			return (
+				<input
+					type="number"
+					name={col.technical_name}
+					class={baseClass}
+					min={col.validation?.min}
+					max={col.validation?.max}
+					required={col.required}
+					step="any"
+				/>
+			);
+		case "date":
+			return (
+				<input
+					type="date"
+					name={col.technical_name}
+					class={baseClass}
+					required={col.required}
+				/>
+			);
+		case "select":
+			return (
+				<select
+					name={col.technical_name}
+					class={baseClass}
+					required={col.required}
+				>
+					<option value="">{t(lang, "common.select")}</option>
+					{col.options?.map((opt) => (
+						<option value={opt}>{opt}</option>
+					))}
+				</select>
+			);
+		case "file":
+			return (
+				<div>
+					<input
+						type="file"
+						name={col.technical_name}
+						id={`file-${col.technical_name}`}
+						class={baseClass}
+						accept={col.validation?.allowedContentTypes?.join(",")}
+						data-max-size={col.validation?.maxFileSize}
+						data-required={col.required ? "true" : "false"}
+						onchange={`handleFileInput('${col.technical_name}')`}
+					/>
+					<div
+						id={`file-preview-${col.technical_name}`}
+						class="mt-2 text-sm text-surface-400"
+					></div>
+					<div
+						id={`file-current-${col.technical_name}`}
+						class="mt-2 text-sm text-surface-400"
+					></div>
+					<div id={`file-progress-${col.technical_name}`} class="hidden mt-2">
+						<div class="flex items-center gap-2">
+							<div class="flex-1 h-2 bg-surface-700 rounded-full overflow-hidden">
+								<div
+									id={`file-progress-bar-${col.technical_name}`}
+									class="h-full bg-primary-500 transition-all duration-150"
+									style="width: 0%"
+								></div>
+							</div>
+							<span
+								id={`file-progress-text-${col.technical_name}`}
+								class="text-xs text-surface-400 w-12 text-right"
+							>
+								0%
+							</span>
+						</div>
+					</div>
+				</div>
+			);
+		default:
+			return (
+				<input
+					type="text"
+					name={col.technical_name}
+					class={baseClass}
+					pattern={col.validation?.pattern}
+					required={col.required}
+				/>
+			);
+	}
 }

@@ -1,0 +1,6 @@
+pre-commit:
+  commands:
+    check:
+      glob: "*.{js,ts,tsx,json}"
+      run: bunx @biomejs/biome check --write --no-errors-on-unmatched --files-ignore-unknown=true --colors=off --linter-enabled=false {staged_files}
+      stage_fixed: true

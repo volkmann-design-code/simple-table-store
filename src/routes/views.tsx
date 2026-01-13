@@ -1,201 +1,223 @@
-import { Hono } from 'hono';
-import { getCookie } from 'hono/cookie';
-import { verifySessionToken } from '../utils/jwt';
-import { withUserContext } from '../db';
-import { LoginPage } from '../views/LoginPage';
-import { DashboardPage } from '../views/DashboardPage';
-import { DatastorePage } from '../views/DatastorePage';
-import { OrgPage } from '../views/OrgPage';
-import { enrichRecordWithFileUrls } from '../utils/file-enrichment';
-import { getLanguage } from '../i18n';
-import type { DataStore, DataRecord, Organization, UserPublic } from '../types';
+import { Hono } from "hono";
+import { getCookie } from "hono/cookie";
+import { withUserContext } from "../db";
+import { getLanguage } from "../i18n";
+import type { DataRecord, DataStore, Organization, UserPublic } from "../types";
+import { enrichRecordWithFileUrls } from "../utils/file-enrichment";
+import { verifySessionToken } from "../utils/jwt";
+import { DashboardPage } from "../views/DashboardPage";
+import { DatastorePage } from "../views/DatastorePage";
+import { LoginPage } from "../views/LoginPage";
+import { OrgPage } from "../views/OrgPage";
 
 export const viewRoutes = new Hono();
 
 // Get branding configuration from environment variables
 const getBrandingConfig = () => {
-  const logoUrl = process.env.LOGO_URL || '';
-  const appTitle = process.env.APP_TITLE || 'simple-table-store';
-  return { logoUrl, appTitle };
+	const logoUrl = process.env.LOGO_URL || "";
+	const appTitle = process.env.APP_TITLE || "simple-table-store";
+	return { logoUrl, appTitle };
 };
 
 // Login page
-viewRoutes.get('/login', (c) => {
-  const error = c.req.query('error');
-  const lang = getLanguage(c);
-  const branding = getBrandingConfig();
-  return c.html(<LoginPage error={error} lang={lang} logoUrl={branding.logoUrl} appTitle={branding.appTitle} />);
+viewRoutes.get("/login", (c) => {
+	const error = c.req.query("error");
+	const lang = getLanguage(c);
+	const branding = getBrandingConfig();
+	return c.html(
+		<LoginPage
+			error={error}
+			lang={lang}
+			logoUrl={branding.logoUrl}
+			appTitle={branding.appTitle}
+		/>,
+	);
 });
 
 // Handle form logout
-viewRoutes.post('/auth/logout', async (c) => {
-  const { clearSessionCookie } = await import('../middleware/session');
-  clearSessionCookie(c);
-  return c.redirect('/login');
+viewRoutes.post("/auth/logout", async (c) => {
+	const { clearSessionCookie } = await import("../middleware/session");
+	clearSessionCookie(c);
+	return c.redirect("/login");
 });
 
 // Dashboard (requires auth)
-viewRoutes.get('/', async (c) => {
-  const token = getCookie(c, 'session');
+viewRoutes.get("/", async (c) => {
+	const token = getCookie(c, "session");
 
-  if (!token) {
-    return c.redirect('/login');
-  }
+	if (!token) {
+		return c.redirect("/login");
+	}
 
-  const session = await verifySessionToken(token);
+	const session = await verifySessionToken(token);
 
-  if (!session) {
-    return c.redirect('/login');
-  }
+	if (!session) {
+		return c.redirect("/login");
+	}
 
-  const datastores = await withUserContext<DataStore[]>(
-    session.userId,
-    session.orgId,
-    async (client) => {
-      const result = await client.query('SELECT * FROM datastores ORDER BY name ASC');
-      return result.rows;
-    }
-  );
+	const datastores = await withUserContext<DataStore[]>(
+		session.userId,
+		session.orgId,
+		async (client) => {
+			const result = await client.query(
+				"SELECT * FROM datastores ORDER BY name ASC",
+			);
+			return result.rows;
+		},
+	);
 
-  const lang = getLanguage(c);
-  const branding = getBrandingConfig();
-  return c.html(<DashboardPage session={session} datastores={datastores} lang={lang} logoUrl={branding.logoUrl} appTitle={branding.appTitle} />);
+	const lang = getLanguage(c);
+	const branding = getBrandingConfig();
+	return c.html(
+		<DashboardPage
+			session={session}
+			datastores={datastores}
+			lang={lang}
+			logoUrl={branding.logoUrl}
+			appTitle={branding.appTitle}
+		/>,
+	);
 });
 
 // Organization view
-viewRoutes.get('/org', async (c) => {
-  const token = getCookie(c, 'session');
+viewRoutes.get("/org", async (c) => {
+	const token = getCookie(c, "session");
 
-  if (!token) {
-    return c.redirect('/login');
-  }
+	if (!token) {
+		return c.redirect("/login");
+	}
 
-  const session = await verifySessionToken(token);
+	const session = await verifySessionToken(token);
 
-  if (!session) {
-    return c.redirect('/login');
-  }
+	if (!session) {
+		return c.redirect("/login");
+	}
 
-  // Check if user has org_id
-  if (!session.orgId) {
-    return c.redirect('/');
-  }
+	// Check if user has org_id
+	if (!session.orgId) {
+		return c.redirect("/");
+	}
 
-  const result = await withUserContext<{ organization: Organization | null; members: UserPublic[] }>(
-    session.userId,
-    session.orgId,
-    async (client) => {
-      // Get organization
-      const orgResult = await client.query('SELECT * FROM organizations WHERE id = $1', [session.orgId]);
-      const organization = orgResult.rows[0] || null;
+	const result = await withUserContext<{
+		organization: Organization | null;
+		members: UserPublic[];
+	}>(session.userId, session.orgId, async (client) => {
+		// Get organization
+		const orgResult = await client.query(
+			"SELECT * FROM organizations WHERE id = $1",
+			[session.orgId],
+		);
+		const organization = orgResult.rows[0] || null;
 
-      if (!organization) {
-        return { organization: null, members: [] };
-      }
+		if (!organization) {
+			return { organization: null, members: [] };
+		}
 
-      // Get all members
-      const membersResult = await client.query(
-        'SELECT id, org_id, email, created_at, updated_at FROM users WHERE org_id = $1 ORDER BY created_at ASC',
-        [session.orgId]
-      );
+		// Get all members
+		const membersResult = await client.query(
+			"SELECT id, org_id, email, created_at, updated_at FROM users WHERE org_id = $1 ORDER BY created_at ASC",
+			[session.orgId],
+		);
 
-      return {
-        organization,
-        members: membersResult.rows,
-      };
-    }
-  );
+		return {
+			organization,
+			members: membersResult.rows,
+		};
+	});
 
-  if (!result.organization) {
-    return c.redirect('/');
-  }
+	if (!result.organization) {
+		return c.redirect("/");
+	}
 
-  const lang = getLanguage(c);
-  const branding = getBrandingConfig();
-  return c.html(
-    <OrgPage
-      session={session}
-      organization={result.organization}
-      members={result.members}
-      lang={lang}
-      logoUrl={branding.logoUrl}
-      appTitle={branding.appTitle}
-    />
-  );
+	const lang = getLanguage(c);
+	const branding = getBrandingConfig();
+	return c.html(
+		<OrgPage
+			session={session}
+			organization={result.organization}
+			members={result.members}
+			lang={lang}
+			logoUrl={branding.logoUrl}
+			appTitle={branding.appTitle}
+		/>,
+	);
 });
 
 // Datastore detail view
-viewRoutes.get('/datastores/:slug', async (c) => {
-  const token = getCookie(c, 'session');
+viewRoutes.get("/datastores/:slug", async (c) => {
+	const token = getCookie(c, "session");
 
-  if (!token) {
-    return c.redirect('/login');
-  }
+	if (!token) {
+		return c.redirect("/login");
+	}
 
-  const session = await verifySessionToken(token);
+	const session = await verifySessionToken(token);
 
-  if (!session) {
-    return c.redirect('/login');
-  }
+	if (!session) {
+		return c.redirect("/login");
+	}
 
-  const slug = c.req.param('slug');
-  const page = parseInt(c.req.query('page') || '1');
-  const limit = 50;
+	const slug = c.req.param("slug");
+	const page = parseInt(c.req.query("page") || "1", 10);
+	const limit = 50;
 
-  const result = await withUserContext<{ datastore: DataStore | null; records: DataRecord[]; total: number }>(
-    session.userId,
-    session.orgId,
-    async (client) => {
-      const dsResult = await client.query('SELECT * FROM datastores WHERE slug = $1', [slug]);
-      const datastore = dsResult.rows[0] || null;
+	const result = await withUserContext<{
+		datastore: DataStore | null;
+		records: DataRecord[];
+		total: number;
+	}>(session.userId, session.orgId, async (client) => {
+		const dsResult = await client.query(
+			"SELECT * FROM datastores WHERE slug = $1",
+			[slug],
+		);
+		const datastore = dsResult.rows[0] || null;
 
-      if (!datastore) {
-        return { datastore: null, records: [], total: 0 };
-      }
+		if (!datastore) {
+			return { datastore: null, records: [], total: 0 };
+		}
 
-      const recordsResult = await client.query(
-        'SELECT * FROM records WHERE datastore_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
-        [datastore.id, limit, (page - 1) * limit]
-      );
+		const recordsResult = await client.query(
+			"SELECT * FROM records WHERE datastore_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+			[datastore.id, limit, (page - 1) * limit],
+		);
 
-      const countResult = await client.query(
-        'SELECT COUNT(*) as count FROM records WHERE datastore_id = $1',
-        [datastore.id]
-      );
+		const countResult = await client.query(
+			"SELECT COUNT(*) as count FROM records WHERE datastore_id = $1",
+			[datastore.id],
+		);
 
-      return {
-        datastore,
-        records: recordsResult.rows,
-        total: parseInt(countResult.rows[0].count),
-      };
-    }
-  );
+		return {
+			datastore,
+			records: recordsResult.rows,
+			total: parseInt(countResult.rows[0].count, 10),
+		};
+	});
 
-  if (!result.datastore) {
-    return c.notFound();
-  }
+	if (!result.datastore) {
+		return c.notFound();
+	}
 
-  // Enrich records with file URLs for display
-  const enrichedRecords = result.records.map((record) =>
-    enrichRecordWithFileUrls(record, result.datastore!, null)
-  );
+	// Enrich records with file URLs for display
+	const enrichedRecords = result.records.map((record) =>
+		enrichRecordWithFileUrls(record, result.datastore!, null),
+	);
 
-  const lang = getLanguage(c);
-  const branding = getBrandingConfig();
-  return c.html(
-    <DatastorePage
-      session={session}
-      datastore={result.datastore}
-      records={enrichedRecords}
-      pagination={{
-        page,
-        limit,
-        total: result.total,
-        totalPages: Math.ceil(result.total / limit),
-      }}
-      lang={lang}
-      logoUrl={branding.logoUrl}
-      appTitle={branding.appTitle}
-    />
-  );
+	const lang = getLanguage(c);
+	const branding = getBrandingConfig();
+	return c.html(
+		<DatastorePage
+			session={session}
+			datastore={result.datastore}
+			records={enrichedRecords}
+			pagination={{
+				page,
+				limit,
+				total: result.total,
+				totalPages: Math.ceil(result.total / limit),
+			}}
+			lang={lang}
+			logoUrl={branding.logoUrl}
+			appTitle={branding.appTitle}
+		/>,
+	);
 });

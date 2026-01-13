@@ -6,6 +6,11 @@ WORKDIR /app
 # Copy package files
 COPY package.json bun.lock* ./
 
+# Disable prepare script (lefthook install) which requires git
+RUN apk add --no-cache jq && \
+    jq 'del(.scripts.prepare)' package.json > package.json.tmp && \
+    mv package.json.tmp package.json
+
 # Install dependencies
 RUN bun install --frozen-lockfile
 
