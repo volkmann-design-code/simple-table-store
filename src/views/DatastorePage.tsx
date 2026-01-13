@@ -119,17 +119,16 @@ export const DatastorePage: FC<DatastorePageProps> = ({ session, datastore, reco
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                               </svg>
                             </button>
-                            <form method="post" action={`/datastores/${datastore.slug}/records/${record.id}/delete`} onsubmit={`return confirm('${t(langCode, 'datastore.deleteConfirm')}')`}>
-                              <button
-                                type="submit"
-                                class="p-1.5 text-surface-400 hover:text-red-400 hover:bg-surface-700 rounded transition-colors"
-                                title={t(langCode, 'common.delete')}
-                              >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                              </button>
-                            </form>
+                            <button
+                              type="button"
+                              class="p-1.5 text-surface-400 hover:text-red-400 hover:bg-surface-700 rounded transition-colors"
+                              onclick={`deleteRecord('${record.id}')`}
+                              title={t(langCode, 'common.delete')}
+                            >
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -169,9 +168,10 @@ export const DatastorePage: FC<DatastorePageProps> = ({ session, datastore, reco
                 </svg>
               </button>
             </div>
-            <form id="record-form" method="post" action={`/datastores/${datastore.slug}/records`} enctype="multipart/form-data">
-              <input type="hidden" id="record-id" name="_id" value="" />
-              <input type="hidden" id="form-method" name="_method" value="POST" />
+            <form id="record-form" onsubmit="return handleFormSubmit(event)">
+              <input type="hidden" id="record-id" value="" />
+              <input type="hidden" id="form-method" value="POST" />
+              <div id="form-error" class="hidden mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm"></div>
               <div class="space-y-4">
                 {columns.map((col) => (
                   <div>
@@ -188,7 +188,16 @@ export const DatastorePage: FC<DatastorePageProps> = ({ session, datastore, reco
               </div>
               <div class="flex justify-end gap-3 mt-6">
                 <button type="button" onclick="closeModal()" class="btn btn-secondary">{t(langCode, 'common.cancel')}</button>
-                <button type="submit" class="btn btn-primary">{t(langCode, 'common.save')}</button>
+                <button type="submit" id="submit-btn" class="btn btn-primary">
+                  <span id="submit-text">{t(langCode, 'common.save')}</span>
+                  <span id="submit-loading" class="hidden">
+                    <svg class="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {t(langCode, 'common.saving')}
+                  </span>
+                </button>
               </div>
             </form>
           </div>
@@ -196,23 +205,40 @@ export const DatastorePage: FC<DatastorePageProps> = ({ session, datastore, reco
 
         {/* Scripts for modal handling */}
         <script dangerouslySetInnerHTML={{ __html: `
+          const DATASTORE_SLUG = '${datastore.slug}';
+          const FILE_COLUMNS = ${JSON.stringify(columns.filter(c => c.type === 'file').map(c => c.technical_name))};
+          const EXISTING_FILE_REFS = {};
+          
           const translations = {
             addRecord: '${t(langCode, 'datastore.addRecord')}',
             editRecord: '${t(langCode, 'datastore.editRecord')}',
             currentFile: '${t(langCode, 'datastore.currentFile')}',
             selectNewFile: '${t(langCode, 'datastore.selectNewFile')}',
+            deleteConfirm: '${t(langCode, 'datastore.deleteConfirm')}',
+            uploading: '${t(langCode, 'datastore.uploading') || 'Uploading...'}',
           };
+          
+          function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+          }
+
           function closeModal() {
             document.getElementById('create-modal').classList.add('hidden');
             document.getElementById('record-form').reset();
             document.getElementById('record-id').value = '';
             document.getElementById('form-method').value = 'POST';
             document.getElementById('modal-title').textContent = translations.addRecord;
-            document.getElementById('record-form').action = '/datastores/${datastore.slug}/records';
+            document.getElementById('form-error').classList.add('hidden');
             
-            // Clear all file previews
+            // Clear file state
+            Object.keys(EXISTING_FILE_REFS).forEach(k => delete EXISTING_FILE_REFS[k]);
             document.querySelectorAll('[id^="file-preview-"]').forEach(el => el.innerHTML = '');
             document.querySelectorAll('[id^="file-current-"]').forEach(el => el.innerHTML = '');
+            document.querySelectorAll('[id^="file-progress-"]').forEach(el => el.classList.add('hidden'));
           }
 
           function handleFileInput(fieldName) {
@@ -233,21 +259,12 @@ export const DatastorePage: FC<DatastorePageProps> = ({ session, datastore, reco
               preview.innerHTML = '';
             }
           }
-          
-          function formatBytes(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-          }
 
           function openEditModal(id, data) {
             document.getElementById('create-modal').classList.remove('hidden');
             document.getElementById('record-id').value = id;
             document.getElementById('form-method').value = 'PATCH';
             document.getElementById('modal-title').textContent = translations.editRecord;
-            document.getElementById('record-form').action = '/datastores/${datastore.slug}/records/' + id;
             
             // Fill form with existing data
             Object.entries(data).forEach(([key, value]) => {
@@ -256,19 +273,181 @@ export const DatastorePage: FC<DatastorePageProps> = ({ session, datastore, reco
                 if (input.type === 'checkbox') {
                   input.checked = value === true || value === 'true';
                 } else if (input.type === 'file') {
-                  // For file inputs, show current file info
-                  const currentFileDiv = document.getElementById('file-current-' + key);
-                  if (currentFileDiv && value && typeof value === 'object' && value.file_id) {
-                    const fileInfo = value;
-                    currentFileDiv.innerHTML = translations.currentFile + ' <a href="' + (fileInfo.url || '#') + '" target="_blank" class="text-primary-400 hover:text-primary-300 underline">' + (fileInfo.filename || 'File') + '</a> (' + formatBytes(fileInfo.size || 0) + '). ' + translations.selectNewFile;
-                  } else if (currentFileDiv) {
-                    currentFileDiv.innerHTML = '';
+                  // Store existing file reference for later
+                  if (value && typeof value === 'object' && value.file_id) {
+                    EXISTING_FILE_REFS[key] = value;
+                    const currentFileDiv = document.getElementById('file-current-' + key);
+                    if (currentFileDiv) {
+                      currentFileDiv.innerHTML = translations.currentFile + ': <a href="' + (value.url || '#') + '" target="_blank" class="text-primary-400 hover:text-primary-300 underline">' + (value.filename || 'File') + '</a> (' + formatBytes(value.size || 0) + '). ' + translations.selectNewFile;
+                    }
                   }
                 } else {
                   input.value = value ?? '';
                 }
               }
             });
+          }
+
+          async function uploadFile(fieldName, file) {
+            return new Promise((resolve, reject) => {
+              const formData = new FormData();
+              formData.append('file', file);
+              
+              const xhr = new XMLHttpRequest();
+              const progressContainer = document.getElementById('file-progress-' + fieldName);
+              const progressBar = document.getElementById('file-progress-bar-' + fieldName);
+              const progressText = document.getElementById('file-progress-text-' + fieldName);
+              
+              if (progressContainer) progressContainer.classList.remove('hidden');
+              
+              xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                  const percent = Math.round((e.loaded / e.total) * 100);
+                  if (progressBar) progressBar.style.width = percent + '%';
+                  if (progressText) progressText.textContent = percent + '%';
+                }
+              });
+              
+              xhr.addEventListener('load', () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                  try {
+                    const response = JSON.parse(xhr.responseText);
+                    resolve(response);
+                  } catch (e) {
+                    reject(new Error('Invalid response from server'));
+                  }
+                } else {
+                  try {
+                    const error = JSON.parse(xhr.responseText);
+                    reject(new Error(error.error || 'Upload failed'));
+                  } catch (e) {
+                    reject(new Error('Upload failed: ' + xhr.status));
+                  }
+                }
+              });
+              
+              xhr.addEventListener('error', () => reject(new Error('Network error during upload')));
+              xhr.addEventListener('abort', () => reject(new Error('Upload aborted')));
+              
+              xhr.open('POST', '/api/datastores/' + DATASTORE_SLUG + '/files');
+              xhr.send(formData);
+            });
+          }
+
+          async function handleFormSubmit(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const submitBtn = document.getElementById('submit-btn');
+            const submitText = document.getElementById('submit-text');
+            const submitLoading = document.getElementById('submit-loading');
+            const errorDiv = document.getElementById('form-error');
+            
+            // Disable form
+            submitBtn.disabled = true;
+            submitText.classList.add('hidden');
+            submitLoading.classList.remove('hidden');
+            errorDiv.classList.add('hidden');
+            
+            try {
+              const recordId = document.getElementById('record-id').value;
+              const method = document.getElementById('form-method').value;
+              const isEdit = method === 'PATCH';
+              
+              // Collect form data
+              const data = {};
+              const formData = new FormData(form);
+              
+              // Get all non-file inputs
+              for (const [key, value] of formData.entries()) {
+                if (!FILE_COLUMNS.includes(key)) {
+                  const input = form.querySelector('[name="' + key + '"]');
+                  if (input && input.type === 'checkbox') {
+                    data[key] = input.checked;
+                  } else if (value === '') {
+                    data[key] = null;
+                  } else if (input && input.type === 'number') {
+                    data[key] = value === '' ? null : parseFloat(value);
+                  } else {
+                    data[key] = value;
+                  }
+                }
+              }
+              
+              // Handle checkbox fields that might not be in formData when unchecked
+              form.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                if (!FILE_COLUMNS.includes(cb.name)) {
+                  data[cb.name] = cb.checked;
+                }
+              });
+              
+              // Upload files and get references
+              for (const fieldName of FILE_COLUMNS) {
+                const input = document.getElementById('file-' + fieldName);
+                const file = input?.files?.[0];
+                
+                if (file) {
+                  // Upload new file
+                  const fileRef = await uploadFile(fieldName, file);
+                  data[fieldName] = {
+                    file_id: fileRef.file_id,
+                    filename: fileRef.filename,
+                    content_type: fileRef.content_type,
+                    size: fileRef.size
+                  };
+                } else if (isEdit && EXISTING_FILE_REFS[fieldName]) {
+                  // Keep existing file reference
+                  data[fieldName] = EXISTING_FILE_REFS[fieldName];
+                } else if (input?.dataset.required === 'true' && !isEdit) {
+                  throw new Error('File is required for ' + fieldName);
+                }
+              }
+              
+              // Submit record
+              const url = isEdit 
+                ? '/api/datastores/' + DATASTORE_SLUG + '/records/' + recordId
+                : '/api/datastores/' + DATASTORE_SLUG + '/records';
+              
+              const response = await fetch(url, {
+                method: isEdit ? 'PATCH' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data })
+              });
+              
+              if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || error.details?.map(d => d.message).join(', ') || 'Failed to save record');
+              }
+              
+              // Success - reload page
+              window.location.reload();
+              
+            } catch (error) {
+              errorDiv.textContent = error.message;
+              errorDiv.classList.remove('hidden');
+              submitBtn.disabled = false;
+              submitText.classList.remove('hidden');
+              submitLoading.classList.add('hidden');
+            }
+          }
+
+          async function deleteRecord(recordId) {
+            if (!confirm(translations.deleteConfirm)) return;
+            
+            try {
+              const response = await fetch('/api/datastores/' + DATASTORE_SLUG + '/records/' + recordId, {
+                method: 'DELETE'
+              });
+              
+              if (!response.ok && response.status !== 204) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to delete record');
+              }
+              
+              window.location.reload();
+            } catch (error) {
+              alert(error.message);
+            }
           }
 
           // Close modal on escape key
@@ -355,13 +534,21 @@ function renderInput(col: DataStore['column_definitions'][0], slug: string, lang
             name={col.technical_name}
             id={`file-${col.technical_name}`}
             class={baseClass}
-            required={col.required}
             accept={col.validation?.allowedContentTypes?.join(',')}
             data-max-size={col.validation?.maxFileSize}
+            data-required={col.required ? 'true' : 'false'}
             onchange={`handleFileInput('${col.technical_name}')`}
           />
           <div id={`file-preview-${col.technical_name}`} class="mt-2 text-sm text-surface-400"></div>
           <div id={`file-current-${col.technical_name}`} class="mt-2 text-sm text-surface-400"></div>
+          <div id={`file-progress-${col.technical_name}`} class="hidden mt-2">
+            <div class="flex items-center gap-2">
+              <div class="flex-1 h-2 bg-surface-700 rounded-full overflow-hidden">
+                <div id={`file-progress-bar-${col.technical_name}`} class="h-full bg-primary-500 transition-all duration-150" style="width: 0%"></div>
+              </div>
+              <span id={`file-progress-text-${col.technical_name}`} class="text-xs text-surface-400 w-12 text-right">0%</span>
+            </div>
+          </div>
         </div>
       );
     default:

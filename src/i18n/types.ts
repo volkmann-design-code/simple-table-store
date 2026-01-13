@@ -9,6 +9,7 @@ export interface TranslationKeys {
     actions: string;
     cancel: string;
     save: string;
+    saving: string;
     edit: string;
     delete: string;
     previous: string;
@@ -87,6 +88,7 @@ export interface TranslationKeys {
     deleteConfirm: string;
     currentFile: string;
     selectNewFile: string;
+    uploading: string;
   };
   org: {
     title: string;

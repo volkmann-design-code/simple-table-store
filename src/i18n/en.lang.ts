@@ -6,6 +6,7 @@ const en: TranslationKeys = {
     actions: 'Actions',
     cancel: 'Cancel',
     save: 'Save',
+    saving: 'Saving...',
     edit: 'Edit',
     delete: 'Delete',
     previous: 'Previous',
@@ -84,6 +85,7 @@ const en: TranslationKeys = {
     deleteConfirm: 'Delete this record?',
     currentFile: 'Current file:',
     selectNewFile: 'Select a new file to replace it.',
+    uploading: 'Uploading...',
   },
   org: {
     title: 'Organization',

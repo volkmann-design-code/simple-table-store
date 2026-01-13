@@ -6,6 +6,7 @@ const de: Partial<TranslationKeys> = {
     actions: 'Aktionen',
     cancel: 'Abbrechen',
     save: 'Speichern',
+    saving: 'Speichern...',
     edit: 'Bearbeiten',
     delete: 'Löschen',
     previous: 'Zurück',
@@ -84,6 +85,7 @@ const de: Partial<TranslationKeys> = {
     deleteConfirm: 'Diesen Datensatz löschen?',
     currentFile: 'Aktuelle Datei:',
     selectNewFile: 'Wählen Sie eine neue Datei aus, um sie zu ersetzen.',
+    uploading: 'Hochladen...',
   },
   org: {
     title: 'Organisation',
