@@ -74,5 +74,7 @@ jobs:
             echo "Successfully set package visibility to public (user)"
           else
             echo "Warning: Failed to set package visibility. You may need to set it manually in GitHub settings."
+            echo "This can happen if the package doesn't exist yet or if permissions are insufficient."
+            # Exit 0 to not fail the workflow - the image was pushed successfully
             exit 0
           fi
