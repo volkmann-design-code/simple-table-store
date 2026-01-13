@@ -1,6 +1,14 @@
-# Datastore App
+# simple-data-store
 
-A Postgres-backed web application for securely storing tabular data (minimal Airtable clone).
+> DISCLAIMER: This app has been developed with heavy AI support and
+  turning a blind eye here and there to quickly generate a functional solution!
+
+A Postgres and S3-backed web application for safely storing tabular data.
+It can be used to let your users or customers manage structured data without the need
+for a paid/rate-limited service like Airtable.
+
+It can be easily deployed with a single, small and fast container that requires a postgres database and optional S3-compatible storage for data storage. Of course,
+you need to make sure the underlying database and storage have proper backup solutions.
 
 ## Features
 
@@ -18,7 +26,7 @@ A Postgres-backed web application for securely storing tabular data (minimal Air
 - **Runtime**: Bun
 - **Framework**: Hono v4
 - **Frontend**: Hono JSX + Tailwind CSS
-- **Database**: PostgreSQL 16+
+- **Database**: PostgreSQL
 
 ## Environment Variables
 
@@ -67,7 +75,7 @@ bun run dev
 ```
 
 The docker-compose setup provides:
-- **PostgreSQL 16** on port 54390 (mapped from 5432)
+- **PostgreSQL** on port 54390 (mapped from 5432)
   - Database: `datastore`
   - User: `datastore` / Password: `datastore_dev`
   - Persistent data volume
