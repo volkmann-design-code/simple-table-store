@@ -70,11 +70,24 @@ export async function withApiKeyContext<T>(
   }
 }
 
-// Admin operations bypass RLS
+// Admin operations bypass RLS by setting app.is_admin session variable
 export async function adminQuery<T>(text: string, params?: unknown[]): Promise<T[]> {
-  return query<T>(text, params);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(`SET LOCAL app.is_admin = 'true'`);
+    const result = await client.query(text, params);
+    await client.query('COMMIT');
+    return result.rows as T[];
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
 }
 
 export async function adminQueryOne<T>(text: string, params?: unknown[]): Promise<T | null> {
-  return queryOne<T>(text, params);
+  const rows = await adminQuery<T>(text, params);
+  return rows[0] ?? null;
 }
