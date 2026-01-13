@@ -1,7 +1,17 @@
 {
-  "name": "datastore-app",
-  "version": "1.0.0",
+  "name": "simple-table-store",
+  "version": "0.1.0",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/volkmann-design/simple-table-store.git"
+  },
+  "contributors": [
+    {
+      "name": "Enzo Volkmann",
+      "email": "enzo@volkmann.dev"
+    }
+  ],
   "scripts": {
     "dev": "bun run scripts/dev.ts",
     "build": "bunx @tailwindcss/cli -i src/styles/input.css -o dist/styles.css --minify && bun build src/index.ts --outdir dist --target bun",
