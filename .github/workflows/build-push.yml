@@ -47,3 +47,19 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           platforms: linux/amd64
+
+      - name: Make package public
+        run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
+          OWNER=$(echo "${{ github.repository }}" | cut -d'/' -f1)
+          # Try org endpoint first, fallback to user endpoint
+          gh api \
+            -X PATCH \
+            /orgs/$OWNER/packages/container/$REPO_NAME \
+            -f visibility=public || \
+          gh api \
+            -X PATCH \
+            /user/packages/container/$REPO_NAME \
+            -f visibility=public
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
