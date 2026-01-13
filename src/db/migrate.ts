@@ -2,7 +2,7 @@ import { pool } from './index';
 import { readdir, readFile } from 'fs/promises';
 import { join } from 'path';
 
-const MIGRATIONS_DIR = join(import.meta.dir, 'migrations');
+export const MIGRATIONS_DIR = join(process.cwd(), 'src', 'db', 'migrations');
 
 async function ensureMigrationsTable() {
   await pool.query(`

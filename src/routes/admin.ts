@@ -428,10 +428,8 @@ adminRoutes.post('/migrate', async (c) => {
 adminRoutes.get('/migrate/status', async (c) => {
   try {
     const { readdir } = await import('fs/promises');
-    const { join } = await import('path');
     const { adminQuery } = await import('../db');
-
-    const MIGRATIONS_DIR = join(import.meta.dir, '../db/migrations');
+    const { MIGRATIONS_DIR } = await import('../db/migrate');
     const files = await readdir(MIGRATIONS_DIR);
     const allMigrations = files
       .filter((f) => f.endsWith('.sql'))
