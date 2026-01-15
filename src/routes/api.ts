@@ -4,6 +4,7 @@ import { getLanguage, tFromContext } from "../i18n";
 import { sessionAuth } from "../middleware/session";
 import type {
 	ApiKey,
+	ColumnDefinition,
 	DataRecord,
 	DataStore,
 	PaginatedResponse,
@@ -14,6 +15,38 @@ import { deleteFile, S3_BUCKET } from "../utils/s3";
 import { validateRecordData } from "../utils/validation";
 
 export const apiRoutes = new Hono();
+
+// System fields that can be sorted on
+const SYSTEM_SORT_FIELDS = ["created_at", "updated_at"];
+
+// Build ORDER BY clause with validation against allowed columns
+function buildOrderByClause(
+	sortParam: string | undefined,
+	orderParam: string | undefined,
+	columnDefinitions: ColumnDefinition[],
+): { orderBy: string; sortField: string; sortOrder: string } {
+	const allowedColumns = [
+		...SYSTEM_SORT_FIELDS,
+		...columnDefinitions.map((c) => c.technical_name),
+	];
+
+	const sortField =
+		sortParam && allowedColumns.includes(sortParam) ? sortParam : "created_at";
+	const sortOrder =
+		orderParam && ["asc", "desc"].includes(orderParam.toLowerCase())
+			? orderParam.toUpperCase()
+			: "DESC";
+
+	// For data columns, sort by JSONB field; for system fields, sort directly
+	const isDataColumn = columnDefinitions.some(
+		(c) => c.technical_name === sortField,
+	);
+	const orderBy = isDataColumn
+		? `data->>'${sortField}' ${sortOrder}`
+		: `${sortField} ${sortOrder}`;
+
+	return { orderBy, sortField, sortOrder };
+}
 
 // Helper to check API key and get datastore ID
 async function getApiKeyDatastoreId(c: {
@@ -86,6 +119,8 @@ apiRoutes.get("/datastores/:slug/records", async (c) => {
 	const page = parseInt(c.req.query("page") || "1", 10);
 	const limit = Math.min(parseInt(c.req.query("limit") || "50", 10), 100);
 	const offset = (page - 1) * limit;
+	const sortParam = c.req.query("sort");
+	const orderParam = c.req.query("order");
 
 	// Check for API key first
 	const apiKey = c.req.header("X-API-Key") || c.req.query("api_key");
@@ -109,8 +144,22 @@ apiRoutes.get("/datastores/:slug/records", async (c) => {
 				return { records: [], total: 0, datastore: null };
 			}
 
+			const { orderBy } = buildOrderByClause(
+				sortParam,
+				orderParam,
+				datastore.column_definitions,
+			);
+
 			const recordsResult = await client.query(
-				"SELECT * FROM records WHERE datastore_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+				`SELECT r.*, 
+					uc.email as created_by_email, 
+					uu.email as updated_by_email
+				FROM records r
+				LEFT JOIN users uc ON r.created_by = uc.id
+				LEFT JOIN users uu ON r.updated_by = uu.id
+				WHERE r.datastore_id = $1 
+				ORDER BY ${orderBy} 
+				LIMIT $2 OFFSET $3`,
 				[apiKeyDatastoreId, limit, offset],
 			);
 
@@ -180,8 +229,22 @@ apiRoutes.get("/datastores/:slug/records", async (c) => {
 		const datastore = dsResult.rows[0] as DataStore;
 		const datastoreId = datastore.id;
 
+		const { orderBy } = buildOrderByClause(
+			sortParam,
+			orderParam,
+			datastore.column_definitions,
+		);
+
 		const recordsResult = await client.query(
-			"SELECT * FROM records WHERE datastore_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+			`SELECT r.*, 
+				uc.email as created_by_email, 
+				uu.email as updated_by_email
+			FROM records r
+			LEFT JOIN users uc ON r.created_by = uc.id
+			LEFT JOIN users uu ON r.updated_by = uu.id
+			WHERE r.datastore_id = $1 
+			ORDER BY ${orderBy} 
+			LIMIT $2 OFFSET $3`,
 			[datastoreId, limit, offset],
 		);
 
@@ -252,10 +315,13 @@ apiRoutes.post("/datastores/:slug/records", sessionAuth, async (c) => {
 			return { record: null, errors };
 		}
 
-		// Insert record
+		// Insert record with created_by
 		const recordResult = await client.query(
-			"INSERT INTO records (datastore_id, data) VALUES ($1, $2) RETURNING *",
-			[datastore.id, JSON.stringify(body.data)],
+			`INSERT INTO records (datastore_id, data, created_by) 
+			 VALUES ($1, $2, $3) 
+			 RETURNING *, 
+			   (SELECT email FROM users WHERE id = $3) as created_by_email`,
+			[datastore.id, JSON.stringify(body.data), session.userId],
 		);
 
 		const record = recordResult.rows[0] as DataRecord;
@@ -333,10 +399,15 @@ apiRoutes.patch("/datastores/:slug/records/:id", sessionAuth, async (c) => {
 			return { record: null, errors };
 		}
 
-		// Update record
+		// Update record with updated_by
 		const recordResult = await client.query(
-			"UPDATE records SET data = $1, updated_at = NOW() WHERE id = $2 RETURNING *",
-			[JSON.stringify(mergedData), recordId],
+			`UPDATE records 
+			 SET data = $1, updated_at = NOW(), updated_by = $3 
+			 WHERE id = $2 
+			 RETURNING *, 
+			   (SELECT email FROM users WHERE id = created_by) as created_by_email,
+			   (SELECT email FROM users WHERE id = $3) as updated_by_email`,
+			[JSON.stringify(mergedData), recordId, session.userId],
 		);
 
 		const record = recordResult.rows[0] as DataRecord;

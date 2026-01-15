@@ -88,6 +88,10 @@ const en: TranslationKeys = {
 		currentFile: "Current file:",
 		selectNewFile: "Select a new file to replace it.",
 		uploading: "Uploading...",
+		createdBy: "Created by",
+		createdAt: "at",
+		updatedBy: "Updated by",
+		updatedAt: "at",
 	},
 	org: {
 		title: "Organization",

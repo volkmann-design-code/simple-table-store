@@ -89,6 +89,10 @@ export interface TranslationKeys {
 		currentFile: string;
 		selectNewFile: string;
 		uploading: string;
+		createdBy: string;
+		createdAt: string;
+		updatedBy: string;
+		updatedAt: string;
 	};
 	org: {
 		title: string;

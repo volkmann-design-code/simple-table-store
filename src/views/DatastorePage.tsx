@@ -14,9 +14,57 @@ interface DatastorePageProps {
 		total: number;
 		totalPages: number;
 	};
+	sort?: {
+		field: string;
+		order: "asc" | "desc";
+	};
 	lang?: string;
 	logoUrl?: string;
 	appTitle?: string;
+}
+
+// Helper to build URL with sort and pagination params
+function buildUrl(
+	baseParams: { page?: number; sort?: string; order?: string },
+	currentSort?: { field: string; order: "asc" | "desc" },
+): string {
+	const params = new URLSearchParams();
+	if (baseParams.page && baseParams.page > 1) {
+		params.set("page", String(baseParams.page));
+	}
+	const sortField = baseParams.sort ?? currentSort?.field;
+	const sortOrder = baseParams.order ?? currentSort?.order;
+	if (sortField && sortField !== "created_at") {
+		params.set("sort", sortField);
+	}
+	if (sortOrder && sortOrder !== "desc") {
+		params.set("order", sortOrder);
+	}
+	const queryString = params.toString();
+	return queryString ? `?${queryString}` : "";
+}
+
+// Sort indicator icons
+const SortAscIcon = () => (
+	<svg class="w-3 h-3 ml-1 inline" fill="currentColor" viewBox="0 0 20 20">
+		<path d="M5 12l5-5 5 5H5z" />
+	</svg>
+);
+
+const SortDescIcon = () => (
+	<svg class="w-3 h-3 ml-1 inline" fill="currentColor" viewBox="0 0 20 20">
+		<path d="M5 8l5 5 5-5H5z" />
+	</svg>
+);
+
+// Check if content type is an image
+function isImageType(contentType?: string): boolean {
+	return contentType?.startsWith("image/") ?? false;
+}
+
+// Check if content type is a video
+function isVideoType(contentType?: string): boolean {
+	return contentType?.startsWith("video/") ?? false;
 }
 
 const DefaultLogoIcon = () => (
@@ -40,12 +88,20 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 	datastore,
 	records,
 	pagination,
+	sort = { field: "created_at", order: "desc" },
 	lang = "en",
 	logoUrl,
 	appTitle = "Datastore",
 }) => {
 	const columns = datastore.column_definitions;
 	const langCode = lang as "en" | "de";
+
+	// Build sort URL for a column
+	const getSortUrl = (column: string) => {
+		const newOrder =
+			sort.field === column && sort.order === "asc" ? "desc" : "asc";
+		return buildUrl({ sort: column, order: newOrder }, sort);
+	};
 
 	return (
 		<Layout
@@ -106,7 +162,7 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 
 				{/* Main Content */}
 				<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-					<div class="flex items-center justify-between mb-6">
+					<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
 						<div>
 							<div class="flex items-center gap-2">
 								<a
@@ -137,7 +193,7 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 						</div>
 						<button
 							type="button"
-							class="btn btn-primary"
+							class="btn btn-primary flex flex-row items-center"
 							onclick="document.getElementById('create-modal').classList.remove('hidden')"
 						>
 							<svg
@@ -164,7 +220,20 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 								<thead>
 									<tr class="border-b border-surface-700">
 										{columns.map((col) => (
-											<th class="table-header">{col.name}</th>
+											<th class="table-header">
+												<a
+													href={getSortUrl(col.technical_name)}
+													class="flex items-center hover:text-primary-400 transition-colors"
+												>
+													{col.name}
+													{sort.field === col.technical_name &&
+														(sort.order === "asc" ? (
+															<SortAscIcon />
+														) : (
+															<SortDescIcon />
+														))}
+												</a>
+											</th>
 										))}
 										<th class="table-header w-20">
 											{t(langCode, "common.actions")}
@@ -183,60 +252,101 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 										</tr>
 									) : (
 										records.map((record) => (
-											<tr class="border-b border-surface-800 hover:bg-surface-800/30 transition-colors">
-												{columns.map((col) => (
-													<td class="table-cell text-surface-200">
-														{formatValue(
-															record.data[col.technical_name],
-															col.type,
+											<>
+												<tr class="border-b border-surface-800/50 hover:bg-surface-800/30 transition-colors">
+													{columns.map((col) => (
+														<td class="table-cell text-surface-200">
+															{formatValue(
+																record.data[col.technical_name],
+																col.type,
+															)}
+														</td>
+													))}
+													<td class="table-cell">
+														<div class="flex items-center gap-2">
+															<button
+																type="button"
+																class="p-1.5 text-surface-400 hover:text-primary-400 hover:bg-surface-700 rounded transition-colors"
+																onclick={`openEditModal('${record.id}', ${JSON.stringify(record.data).replace(/'/g, "\\'")})`}
+																title={t(langCode, "common.edit")}
+															>
+																<svg
+																	class="w-4 h-4"
+																	fill="none"
+																	stroke="currentColor"
+																	viewBox="0 0 24 24"
+																>
+																	<path
+																		stroke-linecap="round"
+																		stroke-linejoin="round"
+																		stroke-width="2"
+																		d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+																	/>
+																</svg>
+															</button>
+															<button
+																type="button"
+																class="p-1.5 text-surface-400 hover:text-red-400 hover:bg-surface-700 rounded transition-colors"
+																onclick={`deleteRecord('${record.id}')`}
+																title={t(langCode, "common.delete")}
+															>
+																<svg
+																	class="w-4 h-4"
+																	fill="none"
+																	stroke="currentColor"
+																	viewBox="0 0 24 24"
+																>
+																	<path
+																		stroke-linecap="round"
+																		stroke-linejoin="round"
+																		stroke-width="2"
+																		d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+																	/>
+																</svg>
+															</button>
+														</div>
+													</td>
+												</tr>
+												{/* Metadata row */}
+												<tr class="border-b border-surface-800">
+													<td
+														colspan={columns.length + 1}
+														class="px-4 py-1.5 text-xs text-surface-500"
+													>
+														<span>
+															{t(langCode, "datastore.createdBy")}{" "}
+															<span class="text-surface-400">
+																{record.created_by_email || "-"}
+															</span>
+														</span>
+														<span class="mx-1"> </span>
+														<span>
+															{t(langCode, "datastore.createdAt")}{" "}
+															<span class="text-surface-400">
+																{formatDate(record.created_at, langCode)}
+															</span>
+														</span>
+														{record.updated_by && (
+															<>
+																<span class="mx-2">·</span>
+																<span>
+																	{t(langCode, "datastore.updatedBy")}{" "}
+																	<span class="text-surface-400">
+																		{record.updated_by_email || "-"}
+																	</span>
+																</span>
+																<span class="mx-1"> </span>
+																<span>
+																	{t(langCode, "datastore.updatedAt")}{" "}
+																	<span class="text-surface-400">
+																		{formatDate(record.updated_at, langCode)}
+																	</span>
+																</span>
+															</>
 														)}
 													</td>
-												))}
-												<td class="table-cell">
-													<div class="flex items-center gap-2">
-														<button
-															type="button"
-															class="p-1.5 text-surface-400 hover:text-primary-400 hover:bg-surface-700 rounded transition-colors"
-															onclick={`openEditModal('${record.id}', ${JSON.stringify(record.data).replace(/'/g, "\\'")})`}
-															title={t(langCode, "common.edit")}
-														>
-															<svg
-																class="w-4 h-4"
-																fill="none"
-																stroke="currentColor"
-																viewBox="0 0 24 24"
-															>
-																<path
-																	stroke-linecap="round"
-																	stroke-linejoin="round"
-																	stroke-width="2"
-																	d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-																/>
-															</svg>
-														</button>
-														<button
-															type="button"
-															class="p-1.5 text-surface-400 hover:text-red-400 hover:bg-surface-700 rounded transition-colors"
-															onclick={`deleteRecord('${record.id}')`}
-															title={t(langCode, "common.delete")}
-														>
-															<svg
-																class="w-4 h-4"
-																fill="none"
-																stroke="currentColor"
-																viewBox="0 0 24 24"
-															>
-																<path
-																	stroke-linecap="round"
-																	stroke-linejoin="round"
-																	stroke-width="2"
-																	d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-																/>
-															</svg>
-														</button>
-													</div>
-												</td>
-											</tr>
+												</tr>
+											</>
 										))
 									)}
 								</tbody>
@@ -259,7 +369,7 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 								<div class="flex gap-2">
 									{pagination.page > 1 && (
 										<a
-											href={`?page=${pagination.page - 1}`}
+											href={buildUrl({ page: pagination.page - 1 }, sort)}
 											class="btn btn-secondary text-sm"
 										>
 											{t(langCode, "common.previous")}
@@ -267,7 +377,7 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 									)}
 									{pagination.page < pagination.totalPages && (
 										<a
-											href={`?page=${pagination.page + 1}`}
+											href={buildUrl({ page: pagination.page + 1 }, sort)}
 											class="btn btn-secondary text-sm"
 										>
 											{t(langCode, "common.next")}
@@ -373,6 +483,42 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 					</div>
 				</div>
 
+				{/* Media Preview Modal */}
+				<div
+					id="media-modal"
+					class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+				>
+					<div class="relative max-w-4xl max-h-[90vh] mx-4">
+						<button
+							type="button"
+							onclick="closeMediaModal()"
+							class="absolute -top-10 right-0 p-2 text-white/70 hover:text-white transition-colors"
+						>
+							<svg
+								class="w-6 h-6"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M6 18L18 6M6 6l12 12"
+								/>
+							</svg>
+						</button>
+						<div
+							id="media-modal-title"
+							class="absolute -top-10 left-0 text-white/70 text-sm truncate max-w-[calc(100%-3rem)]"
+						></div>
+						<div
+							id="media-modal-content"
+							class="bg-surface-900 rounded-lg overflow-hidden"
+						></div>
+					</div>
+				</div>
+
 				{/* Scripts for modal handling */}
 				<script
 					dangerouslySetInnerHTML={{
@@ -389,6 +535,35 @@ export const DatastorePage: FC<DatastorePageProps> = ({
             deleteConfirm: '${t(langCode, "datastore.deleteConfirm")}',
             uploading: '${t(langCode, "datastore.uploading") || "Uploading..."}',
           };
+          
+          // Media preview modal functions
+          function openMediaModal(url, filename, contentType) {
+            const modal = document.getElementById('media-modal');
+            const content = document.getElementById('media-modal-content');
+            const title = document.getElementById('media-modal-title');
+            
+            title.textContent = filename || 'Preview';
+            
+            if (contentType && contentType.startsWith('video/')) {
+              content.innerHTML = '<video src="' + url + '" controls autoplay class="max-w-full max-h-[80vh]"></video>';
+            } else {
+              content.innerHTML = '<img src="' + url + '" alt="' + (filename || 'Preview') + '" class="max-w-full max-h-[80vh]" />';
+            }
+            
+            modal.classList.remove('hidden');
+          }
+          
+          function closeMediaModal() {
+            const modal = document.getElementById('media-modal');
+            const content = document.getElementById('media-modal-content');
+            modal.classList.add('hidden');
+            content.innerHTML = '';
+          }
+          
+          // Close media modal on backdrop click
+          document.getElementById('media-modal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeMediaModal();
+          });
           
           function formatBytes(bytes) {
             if (bytes === 0) return '0 Bytes';
@@ -450,7 +625,7 @@ export const DatastorePage: FC<DatastorePageProps> = ({
                     EXISTING_FILE_REFS[key] = value;
                     const currentFileDiv = document.getElementById('file-current-' + key);
                     if (currentFileDiv) {
-                      currentFileDiv.innerHTML = translations.currentFile + ': <a href="' + (value.url || '#') + '" target="_blank" class="text-primary-400 hover:text-primary-300 underline">' + (value.filename || 'File') + '</a> (' + formatBytes(value.size || 0) + '). ' + translations.selectNewFile;
+                      currentFileDiv.innerHTML = translations.currentFile + ' <a href="' + (value.url || '#') + '" target="_blank" class="text-primary-400 hover:text-primary-300 underline">' + (value.filename || 'File') + '</a> (' + formatBytes(value.size || 0) + '). ' + translations.selectNewFile;
                     }
                   }
                 } else {
@@ -638,9 +813,12 @@ export const DatastorePage: FC<DatastorePageProps> = ({
             }
           }
 
-          // Close modal on escape key
+          // Close modals on escape key
           document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeModal();
+            if (e.key === 'Escape') {
+              closeModal();
+              closeMediaModal();
+            }
           });
 
           // Close modal on backdrop click
@@ -654,6 +832,12 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 		</Layout>
 	);
 };
+
+function formatDate(date: Date | string, locale: string): string {
+	const d = typeof date === "string" ? new Date(date) : date;
+	if (Number.isNaN(d.getTime())) return "-";
+	return d.toLocaleString(locale);
+}
 
 function formatValue(value: unknown, type: string): string | any {
 	if (value === null || value === undefined) return "-";
@@ -670,15 +854,67 @@ function formatValue(value: unknown, type: string): string | any {
 		value !== null &&
 		"file_id" in value
 	) {
-		const fileRef = value as { filename?: string; url?: string };
+		const fileRef = value as {
+			filename?: string;
+			url?: string;
+			content_type?: string;
+		};
+		const url = fileRef.url || "#";
+		const filename = fileRef.filename || "File";
+		const contentType = fileRef.content_type || "";
+
+		// Show thumbnail for images
+		if (isImageType(contentType)) {
+			return (
+				<button
+					type="button"
+					onclick={`openMediaModal('${url}', '${filename.replace(/'/g, "\\'")}', '${contentType}')`}
+					class="block hover:opacity-80 transition-opacity"
+				>
+					<img
+						src={url}
+						alt={filename}
+						class="w-12 h-12 object-cover rounded border border-surface-700"
+					/>
+				</button>
+			);
+		}
+
+		// Show thumbnail for videos with play overlay
+		if (isVideoType(contentType)) {
+			return (
+				<button
+					type="button"
+					onclick={`openMediaModal('${url}', '${filename.replace(/'/g, "\\'")}', '${contentType}')`}
+					class="relative block hover:opacity-80 transition-opacity"
+				>
+					<video
+						src={url}
+						class="w-12 h-12 object-cover rounded border border-surface-700"
+						preload="metadata"
+					/>
+					<div class="absolute inset-0 flex items-center justify-center bg-black/30 rounded">
+						<svg
+							class="w-5 h-5 text-white"
+							fill="currentColor"
+							viewBox="0 0 20 20"
+						>
+							<path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+						</svg>
+					</div>
+				</button>
+			);
+		}
+
+		// Default file link
 		return (
 			<a
-				href={fileRef.url || "#"}
+				href={url}
 				class="text-primary-400 hover:text-primary-300 underline"
 				target="_blank"
 				rel="noopener noreferrer"
 			>
-				{fileRef.filename || "File"}
+				{filename}
 			</a>
 		);
 	}

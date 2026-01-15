@@ -92,6 +92,10 @@ const de: Partial<TranslationKeys> = {
 		currentFile: "Aktuelle Datei:",
 		selectNewFile: "Wähle eine neue Datei aus, um sie zu ersetzen.",
 		uploading: "Hochladen...",
+		createdBy: "Erstellt von",
+		createdAt: "am",
+		updatedBy: "Aktualisiert von",
+		updatedAt: "am",
 	},
 	org: {
 		title: "Organisation",

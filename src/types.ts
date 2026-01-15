@@ -59,6 +59,11 @@ export interface DataRecord {
 	data: { [key: string]: unknown };
 	created_at: Date;
 	updated_at: Date;
+	created_by: string | null;
+	updated_by: string | null;
+	// Populated via JOIN when needed for display
+	created_by_email?: string;
+	updated_by_email?: string;
 }
 
 export interface ApiKey {
