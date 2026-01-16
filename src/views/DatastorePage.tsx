@@ -2,6 +2,8 @@ import type { FC } from "hono/jsx";
 import { t } from "../i18n";
 import type { DataRecord, DataStore, SessionPayload } from "../types";
 import { getAcceptAttribute } from "../utils/file-presets";
+import { SettingsIcon, SortAscIcon, SortDescIcon } from "./components/Icons";
+import { Navbar } from "./components/Navbar";
 import { Layout } from "./Layout";
 
 interface DatastorePageProps {
@@ -44,19 +46,6 @@ function buildUrl(
 	return queryString ? `?${queryString}` : "";
 }
 
-// Sort indicator icons
-const SortAscIcon = () => (
-	<svg class="w-3 h-3 ml-1 inline" fill="currentColor" viewBox="0 0 20 20">
-		<path d="M5 12l5-5 5 5H5z" />
-	</svg>
-);
-
-const SortDescIcon = () => (
-	<svg class="w-3 h-3 ml-1 inline" fill="currentColor" viewBox="0 0 20 20">
-		<path d="M5 8l5 5 5-5H5z" />
-	</svg>
-);
-
 // Check if content type is an image
 function isImageType(contentType?: string): boolean {
 	return contentType?.startsWith("image/") ?? false;
@@ -66,22 +55,6 @@ function isImageType(contentType?: string): boolean {
 function isVideoType(contentType?: string): boolean {
 	return contentType?.startsWith("video/") ?? false;
 }
-
-const DefaultLogoIcon = () => (
-	<svg
-		class="w-4 h-4 text-white"
-		fill="none"
-		stroke="currentColor"
-		viewBox="0 0 24 24"
-	>
-		<path
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			stroke-width="2"
-			d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
-		/>
-	</svg>
-);
 
 export const DatastorePage: FC<DatastorePageProps> = ({
 	session,
@@ -110,84 +83,26 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 			appTitle={appTitle}
 		>
 			<div class="min-h-screen">
-				{/* Header */}
-				<header class="border-b border-surface-800 bg-surface-900/50 backdrop-blur-sm sticky top-0 z-10">
-					<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-						<div class="flex items-center justify-between h-16">
-							<div class="flex items-center gap-3">
-								<a
-									href="/"
-									class={
-										logoUrl
-											? "w-8 h-8 hover:opacity-80 transition-opacity cursor-pointer"
-											: "w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
-									}
-								>
-									{logoUrl ? (
-										<img
-											src={logoUrl}
-											alt={appTitle}
-											class="w-full h-full object-cover rounded-lg"
-										/>
-									) : (
-										<DefaultLogoIcon />
-									)}
-								</a>
-								<span class="text-surface-500">/</span>
-								<span class="font-semibold text-surface-100">
-									{datastore.name}
-								</span>
-							</div>
-
-							<div class="flex items-center gap-4">
-								<button
-									type="button"
-									onclick="document.getElementById('settings-modal').classList.remove('hidden')"
-									class="text-sm text-surface-400 hover:text-surface-200 transition-colors flex items-center gap-1.5 cursor-pointer"
-									title={t(langCode, "datastore.settings")}
-								>
-									<svg
-										class="w-5 h-5"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-										/>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-										/>
-									</svg>
-									<span class="hidden sm:inline">
-										{t(langCode, "datastore.settings")}
-									</span>
-								</button>
-								<a
-									href="/org"
-									class="text-sm text-surface-400 hover:text-surface-200 transition-colors cursor-pointer"
-								>
-									{t(langCode, "org.title")}
-								</a>
-								<span class="text-sm text-surface-400">{session.email}</span>
-								<form method="post" action="/auth/logout">
-									<button
-										type="submit"
-										class="text-sm text-surface-400 hover:text-surface-200 transition-colors cursor-pointer"
-									>
-										{t(langCode, "common.signOut")}
-									</button>
-								</form>
-							</div>
-						</div>
-					</div>
-				</header>
+				<Navbar
+					session={session}
+					lang={lang}
+					logoUrl={logoUrl}
+					appTitle={appTitle}
+					breadcrumb={datastore.name}
+				>
+					{/* Settings button passed as child to Navbar */}
+					<button
+						type="button"
+						onclick="document.getElementById('settings-modal').classList.remove('hidden')"
+						class="text-sm text-surface-400 hover:text-surface-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+						title={t(langCode, "datastore.settings")}
+					>
+						<SettingsIcon />
+						<span class="hidden sm:inline">
+							{t(langCode, "datastore.settings")}
+						</span>
+					</button>
+				</Navbar>
 
 				{/* Main Content */}
 				<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -336,43 +251,45 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 														</div>
 													</td>
 												</tr>
-												{/* Metadata row */}
+												{/* Metadata row - responsive stacking */}
 												<tr class="border-b border-surface-800">
 													<td
 														colspan={columns.length + 1}
-														class="px-4 py-1.5 text-xs text-surface-500"
+														class="px-4 py-2 text-xs text-surface-500"
 													>
-														<span>
-															{t(langCode, "datastore.createdBy")}{" "}
-															<span class="text-surface-400">
-																{record.created_by_email || "-"}
-															</span>
-														</span>
-														<span class="mx-1"> </span>
-														<span>
-															{t(langCode, "datastore.createdAt")}{" "}
-															<span class="text-surface-400">
-																{formatDate(record.created_at, langCode)}
-															</span>
-														</span>
-														{record.updated_by && (
-															<>
-																<span class="mx-2">·</span>
-																<span>
-																	{t(langCode, "datastore.updatedBy")}{" "}
-																	<span class="text-surface-400">
-																		{record.updated_by_email || "-"}
-																	</span>
+														<div class="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:gap-x-4 sm:gap-y-1">
+															<span>
+																{t(langCode, "datastore.createdBy")}{" "}
+																<span class="text-surface-400">
+																	{record.created_by_email || "-"}
 																</span>
-																<span class="mx-1"> </span>
-																<span>
-																	{t(langCode, "datastore.updatedAt")}{" "}
-																	<span class="text-surface-400">
-																		{formatDate(record.updated_at, langCode)}
-																	</span>
+															</span>
+															<span>
+																{t(langCode, "datastore.createdAt")}{" "}
+																<span class="text-surface-400">
+																	{formatDate(record.created_at, langCode)}
 																</span>
-															</>
-														)}
+															</span>
+															{record.updated_by && (
+																<>
+																	<span class="hidden sm:inline text-surface-600">
+																		·
+																	</span>
+																	<span>
+																		{t(langCode, "datastore.updatedBy")}{" "}
+																		<span class="text-surface-400">
+																			{record.updated_by_email || "-"}
+																		</span>
+																	</span>
+																	<span>
+																		{t(langCode, "datastore.updatedAt")}{" "}
+																		<span class="text-surface-400">
+																			{formatDate(record.updated_at, langCode)}
+																		</span>
+																	</span>
+																</>
+															)}
+														</div>
 													</td>
 												</tr>
 											</>
@@ -384,8 +301,8 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 
 						{/* Pagination */}
 						{pagination.totalPages > 1 && (
-							<div class="flex items-center justify-between px-4 py-3 border-t border-surface-800">
-								<span class="text-sm text-surface-400">
+							<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-t border-surface-800">
+								<span class="text-sm text-surface-400 text-center sm:text-left">
 									{t(langCode, "common.showing")}{" "}
 									{(pagination.page - 1) * pagination.limit + 1}{" "}
 									{t(langCode, "common.to")}{" "}
@@ -395,7 +312,7 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 									)}{" "}
 									{t(langCode, "common.of")} {pagination.total}
 								</span>
-								<div class="flex gap-2">
+								<div class="flex gap-2 justify-center sm:justify-end">
 									{pagination.page > 1 && (
 										<a
 											href={buildUrl({ page: pagination.page - 1 }, sort)}
@@ -423,7 +340,7 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 					id="create-modal"
 					class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
 				>
-					<div class="card w-full max-w-lg mx-4">
+					<div class="card w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
 						<div class="flex items-center justify-between mb-4">
 							<h2
 								id="modal-title"

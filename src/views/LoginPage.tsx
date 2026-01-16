@@ -1,5 +1,6 @@
 import type { FC } from "hono/jsx";
 import { t } from "../i18n";
+import { Logo } from "./components/Logo";
 import { Layout } from "./Layout";
 
 interface LoginPageProps {
@@ -8,22 +9,6 @@ interface LoginPageProps {
 	logoUrl?: string;
 	appTitle?: string;
 }
-
-const DefaultLogoIcon = () => (
-	<svg
-		class="w-8 h-8 text-white"
-		fill="none"
-		stroke="currentColor"
-		viewBox="0 0 24 24"
-	>
-		<path
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			stroke-width="2"
-			d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"
-		/>
-	</svg>
-);
 
 export const LoginPage: FC<LoginPageProps> = ({
 	error,
@@ -41,19 +26,9 @@ export const LoginPage: FC<LoginPageProps> = ({
 				<div class="w-full max-w-md">
 					{/* Logo/Brand */}
 					<div class="text-center mb-8">
-						{logoUrl ? (
-							<div class="inline-flex items-center justify-center w-16 h-16 mb-4">
-								<img
-									src={logoUrl}
-									alt={appTitle}
-									class="w-full h-full object-cover rounded-2xl"
-								/>
-							</div>
-						) : (
-							<div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl mb-4 shadow-lg shadow-primary-500/20">
-								<DefaultLogoIcon />
-							</div>
-						)}
+						<div class="inline-flex items-center justify-center mb-4">
+							<Logo logoUrl={logoUrl} appTitle={appTitle} size="lg" />
+						</div>
 						<h1 class="text-2xl font-bold text-surface-100">{appTitle}</h1>
 						<p class="text-surface-400 mt-1">
 							{t(lang as "en" | "de", "auth.subtitle")}

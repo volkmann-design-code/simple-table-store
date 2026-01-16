@@ -1,6 +1,7 @@
 import type { FC } from "hono/jsx";
 import { t } from "../i18n";
 import type { Organization, SessionPayload, UserPublic } from "../types";
+import { Navbar } from "./components/Navbar";
 import { Layout } from "./Layout";
 
 interface OrgPageProps {
@@ -11,22 +12,6 @@ interface OrgPageProps {
 	logoUrl?: string;
 	appTitle?: string;
 }
-
-const DefaultLogoIcon = () => (
-	<svg
-		class="w-4 h-4 text-white"
-		fill="none"
-		stroke="currentColor"
-		viewBox="0 0 24 24"
-	>
-		<path
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			stroke-width="2"
-			d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
-		/>
-	</svg>
-);
 
 export const OrgPage: FC<OrgPageProps> = ({
 	session,
@@ -63,13 +48,14 @@ export const OrgPage: FC<OrgPageProps> = ({
 
 		if (diffDays > 0) {
 			return `${diffDays} ${diffDays === 1 ? (langCode === "de" ? "Tag" : "day") : langCode === "de" ? "Tage" : "days"} ago`;
-		} else if (diffHours > 0) {
-			return `${diffHours} ${diffHours === 1 ? (langCode === "de" ? "Stunde" : "hour") : langCode === "de" ? "Stunden" : "hours"} ago`;
-		} else if (diffMins > 0) {
-			return `${diffMins} ${diffMins === 1 ? (langCode === "de" ? "Minute" : "minute") : langCode === "de" ? "Minuten" : "minutes"} ago`;
-		} else {
-			return langCode === "de" ? "gerade eben" : "just now";
 		}
+		if (diffHours > 0) {
+			return `${diffHours} ${diffHours === 1 ? (langCode === "de" ? "Stunde" : "hour") : langCode === "de" ? "Stunden" : "hours"} ago`;
+		}
+		if (diffMins > 0) {
+			return `${diffMins} ${diffMins === 1 ? (langCode === "de" ? "Minute" : "minute") : langCode === "de" ? "Minuten" : "minutes"} ago`;
+		}
+		return langCode === "de" ? "gerade eben" : "just now";
 	};
 
 	return (
@@ -79,49 +65,14 @@ export const OrgPage: FC<OrgPageProps> = ({
 			appTitle={appTitle}
 		>
 			<div class="min-h-screen">
-				{/* Header */}
-				<header class="border-b border-surface-800 bg-surface-900/50 backdrop-blur-sm sticky top-0 z-10">
-					<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-						<div class="flex items-center justify-between h-16">
-							<div class="flex items-center gap-3">
-								<a
-									href="/"
-									class={
-										logoUrl
-											? "w-8 h-8 hover:opacity-80 transition-opacity cursor-pointer"
-											: "w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
-									}
-								>
-									{logoUrl ? (
-										<img
-											src={logoUrl}
-											alt={appTitle}
-											class="w-full h-full object-cover rounded-lg"
-										/>
-									) : (
-										<DefaultLogoIcon />
-									)}
-								</a>
-								<span class="text-surface-500">/</span>
-								<span class="font-semibold text-surface-100">
-									{organization.name}
-								</span>
-							</div>
-
-							<div class="flex items-center gap-4">
-								<span class="text-sm text-surface-400">{session.email}</span>
-								<form method="post" action="/auth/logout">
-									<button
-										type="submit"
-										class="text-sm text-surface-400 hover:text-surface-200 transition-colors cursor-pointer"
-									>
-										{t(langCode, "common.signOut")}
-									</button>
-								</form>
-							</div>
-						</div>
-					</div>
-				</header>
+				<Navbar
+					session={session}
+					lang={lang}
+					logoUrl={logoUrl}
+					appTitle={appTitle}
+					breadcrumb={organization.name}
+					showOrgLink={false}
+				/>
 
 				{/* Main Content */}
 				<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -209,7 +160,7 @@ export const OrgPage: FC<OrgPageProps> = ({
 								{t(langCode, "org.noOrgAccess")}
 							</p>
 						) : (
-							<div class="overflow-x-auto">
+							<div class="overflow-x-auto -mx-6 px-6">
 								<table class="min-w-full divide-y divide-surface-700">
 									<thead>
 										<tr>
@@ -232,14 +183,14 @@ export const OrgPage: FC<OrgPageProps> = ({
 												}
 											>
 												<td class="px-4 py-3 text-left text-sm text-surface-100">
-													{member.email}
+													<span class="break-all">{member.email}</span>
 													{member.id === session.userId && (
 														<span class="ml-2 text-xs text-surface-400">
 															({t(langCode, "org.you")})
 														</span>
 													)}
 												</td>
-												<td class="px-4 py-3 text-left text-sm text-surface-400">
+												<td class="px-4 py-3 text-left text-sm text-surface-400 whitespace-nowrap">
 													<relative-time
 														datetime={formatDateTime(member.created_at)}
 														format="relative"

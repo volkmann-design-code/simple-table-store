@@ -1,6 +1,7 @@
 import type { FC } from "hono/jsx";
 import { t } from "../i18n";
 import type { DataStore, SessionPayload } from "../types";
+import { Navbar } from "./components/Navbar";
 import { Layout } from "./Layout";
 
 interface DashboardPageProps {
@@ -10,22 +11,6 @@ interface DashboardPageProps {
 	logoUrl?: string;
 	appTitle?: string;
 }
-
-const DefaultLogoIcon = () => (
-	<svg
-		class="w-4 h-4 text-white"
-		fill="none"
-		stroke="currentColor"
-		viewBox="0 0 24 24"
-	>
-		<path
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			stroke-width="2"
-			d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
-		/>
-	</svg>
-);
 
 export const DashboardPage: FC<DashboardPageProps> = ({
 	session,
@@ -37,52 +22,12 @@ export const DashboardPage: FC<DashboardPageProps> = ({
 	return (
 		<Layout title={`Dashboard - ${appTitle}`} lang={lang} appTitle={appTitle}>
 			<div class="min-h-screen">
-				{/* Header */}
-				<header class="border-b border-surface-800 bg-surface-900/50 backdrop-blur-sm sticky top-0 z-10">
-					<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-						<div class="flex items-center justify-between h-16">
-							<div class="flex items-center gap-3">
-								<a
-									href="/"
-									class={
-										logoUrl
-											? "w-8 h-8 hover:opacity-80 transition-opacity cursor-pointer"
-											: "w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
-									}
-								>
-									{logoUrl ? (
-										<img
-											src={logoUrl}
-											alt={appTitle}
-											class="w-full h-full object-cover rounded-lg"
-										/>
-									) : (
-										<DefaultLogoIcon />
-									)}
-								</a>
-								<span class="font-semibold text-surface-100">{appTitle}</span>
-							</div>
-
-							<div class="flex items-center gap-4">
-								<a
-									href="/org"
-									class="text-sm text-surface-400 hover:text-surface-200 transition-colors cursor-pointer"
-								>
-									{t(lang as "en" | "de", "org.title")}
-								</a>
-								<span class="text-sm text-surface-400">{session.email}</span>
-								<form method="post" action="/auth/logout">
-									<button
-										type="submit"
-										class="text-sm text-surface-400 hover:text-surface-200 transition-colors cursor-pointer"
-									>
-										{t(lang as "en" | "de", "common.signOut")}
-									</button>
-								</form>
-							</div>
-						</div>
-					</div>
-				</header>
+				<Navbar
+					session={session}
+					lang={lang}
+					logoUrl={logoUrl}
+					appTitle={appTitle}
+				/>
 
 				{/* Main Content */}
 				<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
