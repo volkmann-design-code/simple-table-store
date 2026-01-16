@@ -216,12 +216,8 @@ apiRoutes.get("/datastores/:slug/records", async (c) => {
 			);
 
 			const recordsResult = await client.query(
-				`SELECT r.*, 
-					uc.email as created_by_email, 
-					uu.email as updated_by_email
+				`SELECT r.*
 				FROM records r
-				LEFT JOIN users uc ON r.created_by = uc.id
-				LEFT JOIN users uu ON r.updated_by = uu.id
 				WHERE r.datastore_id = $1 
 				ORDER BY ${orderBy} 
 				LIMIT $2 OFFSET $3`,
@@ -245,9 +241,18 @@ apiRoutes.get("/datastores/:slug/records", async (c) => {
 		}
 
 		// Enrich records with file URLs (include API key in URLs)
-		const enrichedRecords = result.records.map((record) =>
-			enrichRecordWithFileUrls(record, result.datastore!, apiKey || undefined),
-		);
+		// Also remove email addresses for security (API key requests should not expose user emails)
+		const enrichedRecords = result.records.map((record) => {
+			const enriched = enrichRecordWithFileUrls(
+				record,
+				result.datastore!,
+				apiKey || undefined,
+			);
+			// Remove email fields for security
+			const { created_by_email, updated_by_email, ...recordWithoutEmails } =
+				enriched as any;
+			return recordWithoutEmails;
+		});
 
 		// Prepare response data
 		const responseData = {
