@@ -499,11 +499,7 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 								</svg>
 							</button>
 						</div>
-						<form
-							id="settings-form"
-							onsubmit="return handleSettingsSubmit(event)"
-							class="p-6"
-						>
+						<form id="settings-form" class="p-6">
 							<div
 								id="settings-error"
 								class="hidden mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm"
@@ -544,7 +540,7 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 									<textarea
 										id="cors-origins-input"
 										name="allowed_cors_origins"
-										rows="3"
+										rows={3}
 										placeholder={t(
 											langCode,
 											"datastore.corsOriginsPlaceholder",
@@ -948,7 +944,16 @@ export const DatastorePage: FC<DatastorePageProps> = ({
               // Validate CORS origins format if provided
               if (corsOrigins && corsOrigins !== '') {
                 // Parse comma-separated or newline-separated origins
-                const origins = corsOrigins.split(/[,\n]/).map(o => o.trim()).filter(o => o.length > 0);
+                // Split on comma first, then split each on newline
+                const origins = corsOrigins
+                  .split(',')
+                  .flatMap(part => {
+                    // Split on actual newline character (char code 10)
+                    const newlineChar = String.fromCharCode(10);
+                    return part.split(newlineChar);
+                  })
+                  .map(o => o.trim())
+                  .filter(o => o.length > 0);
                 
                 // Basic validation - check if each origin looks like a URL
                 for (const origin of origins) {
@@ -1001,6 +1006,9 @@ export const DatastorePage: FC<DatastorePageProps> = ({
               submitLoading.classList.add('hidden');
             }
           }
+
+          // Attach settings form handler
+          document.getElementById('settings-form').addEventListener('submit', handleSettingsSubmit);
 
           // Close settings modal on escape key
           document.addEventListener('keydown', (e) => {

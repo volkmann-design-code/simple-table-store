@@ -327,8 +327,9 @@ The system SHALL provide an API endpoint for authenticated users to update the c
 
 - **GIVEN** a user is authenticated
 - **WHEN** PATCH `/api/datastores/:slug` with `{ allowed_cors_origins: "https://example.com,https://app.example.com" }`
-- **THEN** the datastore's allowed_cors_origins is updated
-- **AND** the updated datastore is returned
+- **THEN** the datastore's allowed_cors_origins is updated and persisted to the database
+- **AND** the updated datastore is returned with the new allowed_cors_origins value
+- **AND** when the datastore is fetched again via GET `/api/datastores/:slug`, the allowed_cors_origins value matches what was set
 
 #### Scenario: Clear cache duration via API
 
@@ -341,8 +342,9 @@ The system SHALL provide an API endpoint for authenticated users to update the c
 
 - **GIVEN** a user is authenticated
 - **WHEN** PATCH `/api/datastores/:slug` with `{ allowed_cors_origins: null }` or `{ allowed_cors_origins: "" }`
-- **THEN** the datastore's allowed_cors_origins is set to NULL
-- **AND** the updated datastore is returned
+- **THEN** the datastore's allowed_cors_origins is set to NULL and persisted to the database
+- **AND** the updated datastore is returned with allowed_cors_origins as null
+- **AND** when the datastore is fetched again via GET `/api/datastores/:slug`, the allowed_cors_origins value is null
 
 #### Scenario: Unauthorized datastore update
 

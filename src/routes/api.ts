@@ -211,9 +211,16 @@ apiRoutes.patch("/datastores/:slug", sessionAuth, async (c) => {
 				body.cache_duration_seconds !== undefined
 					? body.cache_duration_seconds
 					: datastore.cache_duration_seconds;
+			// Normalize CORS origins: trim whitespace, convert empty strings to null
 			const corsOrigins =
 				body.allowed_cors_origins !== undefined
-					? body.allowed_cors_origins || null
+					? body.allowed_cors_origins === null ||
+						(typeof body.allowed_cors_origins === "string" &&
+							body.allowed_cors_origins.trim() === "")
+						? null
+						: typeof body.allowed_cors_origins === "string"
+							? body.allowed_cors_origins.trim()
+							: body.allowed_cors_origins
 					: datastore.allowed_cors_origins;
 
 			// Update datastore settings
