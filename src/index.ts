@@ -3,6 +3,7 @@ import { serveStatic } from "hono/bun";
 import { languageDetector } from "hono/language";
 import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
+import { preventCookiesForApiKeys } from "./middleware/api-cache";
 import { adminRoutes } from "./routes/admin";
 import { apiRoutes } from "./routes/api";
 import { authRoutes } from "./routes/auth";
@@ -21,6 +22,8 @@ app.use(
 		fallbackLanguage: "en",
 	}),
 );
+// Remove cookies for API key requests to allow caching
+app.use("/api/*", preventCookiesForApiKeys);
 
 // Static files
 app.use("/dist/*", serveStatic({ root: "./" }));

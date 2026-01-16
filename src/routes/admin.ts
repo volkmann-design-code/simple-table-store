@@ -335,7 +335,34 @@ adminRoutes.patch("/datastores/:id", async (c) => {
 		slug?: string;
 		description?: string;
 		column_definitions?: ColumnDefinition[];
+		cache_duration_seconds?: number | null;
 	}>();
+
+	// Validate cache_duration_seconds if provided
+	if (
+		body.cache_duration_seconds !== undefined &&
+		body.cache_duration_seconds !== null
+	) {
+		if (
+			typeof body.cache_duration_seconds !== "number" ||
+			body.cache_duration_seconds < 0 ||
+			body.cache_duration_seconds > 31536000
+		) {
+			return c.json(
+				{
+					error: "Validation failed",
+					details: [
+						{
+							field: "cache_duration_seconds",
+							message:
+								"Cache duration must be between 0 and 31536000 seconds (1 year)",
+						},
+					],
+				},
+				400,
+			);
+		}
+	}
 
 	const datastore = await adminQueryOne<DataStore>(
 		`UPDATE datastores SET 
@@ -343,13 +370,15 @@ adminRoutes.patch("/datastores/:id", async (c) => {
       slug = COALESCE($2, slug),
       description = COALESCE($3, description),
       column_definitions = COALESCE($4, column_definitions),
+      cache_duration_seconds = COALESCE($5, cache_duration_seconds),
       updated_at = NOW()
-    WHERE id = $5 RETURNING *`,
+    WHERE id = $6 RETURNING *`,
 		[
 			body.name,
 			body.slug,
 			body.description,
 			body.column_definitions ? JSON.stringify(body.column_definitions) : null,
+			body.cache_duration_seconds,
 			id,
 		],
 	);

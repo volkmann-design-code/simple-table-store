@@ -140,6 +140,35 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 							</div>
 
 							<div class="flex items-center gap-4">
+								<button
+									type="button"
+									onclick="document.getElementById('settings-modal').classList.remove('hidden')"
+									class="text-sm text-surface-400 hover:text-surface-200 transition-colors flex items-center gap-1.5"
+									title={t(langCode, "datastore.settings")}
+								>
+									<svg
+										class="w-5 h-5"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+										/>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+										/>
+									</svg>
+									<span class="hidden sm:inline">
+										{t(langCode, "datastore.settings")}
+									</span>
+								</button>
 								<a
 									href="/org"
 									class="text-sm text-surface-400 hover:text-surface-200 transition-colors"
@@ -519,6 +548,120 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 					</div>
 				</div>
 
+				{/* Settings Modal */}
+				<div
+					id="settings-modal"
+					class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+					onclick="if (event.target === event.currentTarget) document.getElementById('settings-modal').classList.add('hidden')"
+				>
+					<div class="bg-surface-800 rounded-lg shadow-xl max-w-md w-full mx-4 border border-surface-700">
+						<div class="flex items-center justify-between p-6 border-b border-surface-700">
+							<h2
+								id="settings-modal-title"
+								class="text-lg font-semibold text-surface-100"
+							>
+								{t(langCode, "datastore.cacheSettings")}
+							</h2>
+							<button
+								type="button"
+								onclick="document.getElementById('settings-modal').classList.add('hidden')"
+								class="p-1 text-surface-400 hover:text-surface-200"
+							>
+								<svg
+									class="w-5 h-5"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M6 18L18 6M6 6l12 12"
+									/>
+								</svg>
+							</button>
+						</div>
+						<form
+							id="settings-form"
+							onsubmit="return handleSettingsSubmit(event)"
+							class="p-6"
+						>
+							<div
+								id="settings-error"
+								class="hidden mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm"
+							></div>
+							<div class="space-y-4">
+								<div>
+									<label
+										for="cache-duration-input"
+										class="block text-sm font-medium text-surface-300 mb-1.5"
+									>
+										{t(langCode, "datastore.cacheDurationLabel")}
+									</label>
+									<input
+										type="number"
+										id="cache-duration-input"
+										name="cache_duration_seconds"
+										min="0"
+										max="31536000"
+										step="1"
+										value={datastore.cache_duration_seconds ?? ""}
+										placeholder={t(
+											langCode,
+											"datastore.cacheDurationPlaceholder",
+										)}
+										class="input w-full"
+									/>
+									<p class="text-xs text-surface-500 mt-1.5">
+										{t(langCode, "datastore.cacheDurationDescription")}
+									</p>
+								</div>
+							</div>
+							<div class="flex justify-end gap-3 mt-6">
+								<button
+									type="button"
+									onclick="document.getElementById('settings-modal').classList.add('hidden')"
+									class="btn btn-secondary"
+								>
+									{t(langCode, "common.cancel")}
+								</button>
+								<button
+									type="submit"
+									id="settings-submit-btn"
+									class="btn btn-primary"
+								>
+									<span id="settings-submit-text">
+										{t(langCode, "common.save")}
+									</span>
+									<span id="settings-submit-loading" class="hidden">
+										<svg
+											class="animate-spin h-4 w-4 mr-2"
+											fill="none"
+											viewBox="0 0 24 24"
+										>
+											<circle
+												class="opacity-25"
+												cx="12"
+												cy="12"
+												r="10"
+												stroke="currentColor"
+												stroke-width="4"
+											></circle>
+											<path
+												class="opacity-75"
+												fill="currentColor"
+												d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+											></path>
+										</svg>
+										{t(langCode, "common.saving")}
+									</span>
+								</button>
+							</div>
+						</form>
+					</div>
+				</div>
+
 				{/* Scripts for modal handling */}
 				<script
 					dangerouslySetInnerHTML={{
@@ -824,6 +967,74 @@ export const DatastorePage: FC<DatastorePageProps> = ({
           // Close modal on backdrop click
           document.getElementById('create-modal').addEventListener('click', (e) => {
             if (e.target === e.currentTarget) closeModal();
+          });
+
+          // Settings form handler
+          async function handleSettingsSubmit(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const submitBtn = document.getElementById('settings-submit-btn');
+            const submitText = document.getElementById('settings-submit-text');
+            const submitLoading = document.getElementById('settings-submit-loading');
+            const errorDiv = document.getElementById('settings-error');
+            
+            // Disable form
+            submitBtn.disabled = true;
+            submitText.classList.add('hidden');
+            submitLoading.classList.remove('hidden');
+            errorDiv.classList.add('hidden');
+            
+            try {
+              const formData = new FormData(form);
+              const cacheDurationValue = formData.get('cache_duration_seconds');
+              const cacheDurationSeconds = cacheDurationValue && cacheDurationValue !== '' 
+                ? parseInt(cacheDurationValue, 10) 
+                : null;
+              
+              // Validate cache duration
+              if (cacheDurationSeconds !== null) {
+                if (isNaN(cacheDurationSeconds) || cacheDurationSeconds < 0 || cacheDurationSeconds > 31536000) {
+                  throw new Error('${t(langCode, "datastore.cacheDurationInvalid")}');
+                }
+              }
+              
+              const response = await fetch(\`/api/datastores/\${DATASTORE_SLUG}\`, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  cache_duration_seconds: cacheDurationSeconds,
+                }),
+              });
+              
+              if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to update cache settings');
+              }
+              
+              // Close modal and reload page to show updated settings
+              document.getElementById('settings-modal').classList.add('hidden');
+              window.location.reload();
+            } catch (error) {
+              errorDiv.textContent = error.message || 'Failed to update cache settings';
+              errorDiv.classList.remove('hidden');
+            } finally {
+              submitBtn.disabled = false;
+              submitText.classList.remove('hidden');
+              submitLoading.classList.add('hidden');
+            }
+          }
+
+          // Close settings modal on escape key
+          document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+              const settingsModal = document.getElementById('settings-modal');
+              if (settingsModal && !settingsModal.classList.contains('hidden')) {
+                settingsModal.classList.add('hidden');
+              }
+            }
           });
         `,
 					}}

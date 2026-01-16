@@ -49,6 +49,7 @@ export interface DataStore {
 	slug: string;
 	description: string | null;
 	column_definitions: ColumnDefinition[];
+	cache_duration_seconds: number | null;
 	created_at: Date;
 	updated_at: Date;
 }

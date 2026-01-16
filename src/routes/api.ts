@@ -113,6 +113,71 @@ apiRoutes.get("/datastores/:slug", sessionAuth, async (c) => {
 	return c.json(datastore);
 });
 
+// Update datastore cache settings - session auth only
+apiRoutes.patch("/datastores/:slug", sessionAuth, async (c) => {
+	const session = c.get("session");
+	const slug = c.req.param("slug");
+	const body = await c.req.json<{ cache_duration_seconds?: number | null }>();
+
+	// Validate cache_duration_seconds if provided
+	if (
+		body.cache_duration_seconds !== undefined &&
+		body.cache_duration_seconds !== null
+	) {
+		if (
+			typeof body.cache_duration_seconds !== "number" ||
+			body.cache_duration_seconds < 0 ||
+			body.cache_duration_seconds > 31536000
+		) {
+			return c.json(
+				{
+					error: tFromContext(c, "errors.validationFailed"),
+					details: [
+						{
+							field: "cache_duration_seconds",
+							message:
+								"Cache duration must be between 0 and 31536000 seconds (1 year)",
+						},
+					],
+				},
+				400,
+			);
+		}
+	}
+
+	const result = await withUserContext<DataStore | null>(
+		session.userId,
+		session.orgId,
+		async (client) => {
+			// Get datastore to verify ownership
+			const dsResult = await client.query(
+				"SELECT * FROM datastores WHERE slug = $1",
+				[slug],
+			);
+
+			if (dsResult.rows.length === 0) {
+				return null;
+			}
+
+			const datastore = dsResult.rows[0] as DataStore;
+
+			// Update cache_duration_seconds
+			const updateResult = await client.query(
+				"UPDATE datastores SET cache_duration_seconds = $1, updated_at = NOW() WHERE id = $2 RETURNING *",
+				[body.cache_duration_seconds ?? null, datastore.id],
+			);
+
+			return updateResult.rows[0] as DataStore;
+		},
+	);
+
+	if (!result) {
+		return c.json({ error: tFromContext(c, "errors.datastoreNotFound") }, 404);
+	}
+
+	return c.json(result);
+});
+
 // List records - supports both session and API key auth
 apiRoutes.get("/datastores/:slug/records", async (c) => {
 	const slug = c.req.param("slug");
@@ -184,13 +249,26 @@ apiRoutes.get("/datastores/:slug/records", async (c) => {
 			enrichRecordWithFileUrls(record, result.datastore!, apiKey || undefined),
 		);
 
-		return c.json({
+		// Prepare response data
+		const responseData = {
 			data: enrichedRecords,
 			total: result.total,
 			page,
 			limit,
 			totalPages: Math.ceil(result.total / limit),
-		} as PaginatedResponse<DataRecord>);
+		} as PaginatedResponse<DataRecord>;
+
+		// Set Cache-Control header based on datastore cache_duration_seconds
+		// IMPORTANT: Set this BEFORE calling c.json() to ensure it's included in the response
+		const cacheDuration = result.datastore.cache_duration_seconds;
+		if (cacheDuration && cacheDuration > 0) {
+			// Set cache headers for API key requests to allow browser/proxy caching
+			c.header("Cache-Control", `public, max-age=${cacheDuration}`);
+		} else {
+			c.header("Cache-Control", "no-cache");
+		}
+
+		return c.json(responseData);
 	}
 
 	// Session auth - check cookie

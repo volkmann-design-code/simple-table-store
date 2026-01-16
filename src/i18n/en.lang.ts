@@ -92,6 +92,14 @@ const en: TranslationKeys = {
 		createdAt: "at",
 		updatedBy: "Updated by",
 		updatedAt: "at",
+		settings: "Settings",
+		cacheSettings: "Cache Settings",
+		cacheDurationLabel: "Cache Duration (seconds)",
+		cacheDurationDescription:
+			"Set how long API responses should be cached by clients and proxies when accessed via API keys. Set to 0 or leave empty to disable caching. Maximum: 1 year (31536000 seconds).",
+		cacheDurationPlaceholder: "e.g., 3600 for 1 hour",
+		cacheDurationInvalid:
+			"Cache duration must be between 0 and 31536000 seconds",
 	},
 	org: {
 		title: "Organization",

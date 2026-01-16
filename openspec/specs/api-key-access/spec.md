@@ -12,6 +12,8 @@ The system SHALL authenticate external requests using API keys for read-only dat
 - **WHEN** GET `/api/datastores/:slug/records` with header `X-API-Key: <valid-key>`
 - **THEN** the request is authenticated for read-only access
 - **AND** records are returned
+- **AND** if the datastore has `cache_duration_seconds` set to a positive value, the response includes `Cache-Control: public, max-age=<cache_duration_seconds>` header
+- **AND** if the datastore has `cache_duration_seconds` set to NULL or 0, the response includes `Cache-Control: no-cache` header
 
 #### Scenario: Invalid API key
 

@@ -96,6 +96,14 @@ const de: Partial<TranslationKeys> = {
 		createdAt: "am",
 		updatedBy: "Aktualisiert von",
 		updatedAt: "am",
+		settings: "Einstellungen",
+		cacheSettings: "Cache-Einstellungen",
+		cacheDurationLabel: "Cache-Dauer (Sekunden)",
+		cacheDurationDescription:
+			"Legen Sie fest, wie lange API-Antworten von Clients und Proxies zwischengespeichert werden sollen, wenn sie über API-Schlüssel abgerufen werden. Auf 0 setzen oder leer lassen, um das Caching zu deaktivieren. Maximum: 1 Jahr (31536000 Sekunden).",
+		cacheDurationPlaceholder: "z.B. 3600 für 1 Stunde",
+		cacheDurationInvalid:
+			"Cache-Dauer muss zwischen 0 und 31536000 Sekunden liegen",
 	},
 	org: {
 		title: "Organisation",

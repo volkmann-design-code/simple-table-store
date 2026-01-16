@@ -93,6 +93,12 @@ export interface TranslationKeys {
 		createdAt: string;
 		updatedBy: string;
 		updatedAt: string;
+		settings: string;
+		cacheSettings: string;
+		cacheDurationLabel: string;
+		cacheDurationDescription: string;
+		cacheDurationPlaceholder: string;
+		cacheDurationInvalid: string;
 	};
 	org: {
 		title: string;
