@@ -88,8 +88,8 @@ export const OrgPage: FC<OrgPageProps> = ({
 									href="/"
 									class={
 										logoUrl
-											? "w-8 h-8 hover:opacity-80 transition-opacity"
-											: "w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center hover:opacity-80 transition-opacity"
+											? "w-8 h-8 hover:opacity-80 transition-opacity cursor-pointer"
+											: "w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
 									}
 								>
 									{logoUrl ? (
@@ -113,7 +113,7 @@ export const OrgPage: FC<OrgPageProps> = ({
 								<form method="post" action="/auth/logout">
 									<button
 										type="submit"
-										class="text-sm text-surface-400 hover:text-surface-200 transition-colors"
+										class="text-sm text-surface-400 hover:text-surface-200 transition-colors cursor-pointer"
 									>
 										{t(langCode, "common.signOut")}
 									</button>

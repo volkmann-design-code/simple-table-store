@@ -46,8 +46,8 @@ export const DashboardPage: FC<DashboardPageProps> = ({
 									href="/"
 									class={
 										logoUrl
-											? "w-8 h-8 hover:opacity-80 transition-opacity"
-											: "w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center hover:opacity-80 transition-opacity"
+											? "w-8 h-8 hover:opacity-80 transition-opacity cursor-pointer"
+											: "w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
 									}
 								>
 									{logoUrl ? (
@@ -66,7 +66,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
 							<div class="flex items-center gap-4">
 								<a
 									href="/org"
-									class="text-sm text-surface-400 hover:text-surface-200 transition-colors"
+									class="text-sm text-surface-400 hover:text-surface-200 transition-colors cursor-pointer"
 								>
 									{t(lang as "en" | "de", "org.title")}
 								</a>
@@ -74,7 +74,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
 								<form method="post" action="/auth/logout">
 									<button
 										type="submit"
-										class="text-sm text-surface-400 hover:text-surface-200 transition-colors"
+										class="text-sm text-surface-400 hover:text-surface-200 transition-colors cursor-pointer"
 									>
 										{t(lang as "en" | "de", "common.signOut")}
 									</button>
@@ -124,7 +124,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
 							{datastores.map((ds) => (
 								<a
 									href={`/datastores/${ds.slug}`}
-									class="card group hover:border-primary-500/50 hover:bg-surface-800/50 transition-all duration-200"
+									class="card group hover:border-primary-500/50 hover:bg-surface-800/50 transition-all duration-200 cursor-pointer"
 								>
 									<div class="flex items-start justify-between">
 										<div class="w-10 h-10 bg-primary-500/10 rounded-lg flex items-center justify-center group-hover:bg-primary-500/20 transition-colors">

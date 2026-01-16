@@ -119,8 +119,8 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 									href="/"
 									class={
 										logoUrl
-											? "w-8 h-8 hover:opacity-80 transition-opacity"
-											: "w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center hover:opacity-80 transition-opacity"
+											? "w-8 h-8 hover:opacity-80 transition-opacity cursor-pointer"
+											: "w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
 									}
 								>
 									{logoUrl ? (
@@ -143,7 +143,7 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 								<button
 									type="button"
 									onclick="document.getElementById('settings-modal').classList.remove('hidden')"
-									class="text-sm text-surface-400 hover:text-surface-200 transition-colors flex items-center gap-1.5"
+									class="text-sm text-surface-400 hover:text-surface-200 transition-colors flex items-center gap-1.5 cursor-pointer"
 									title={t(langCode, "datastore.settings")}
 								>
 									<svg
@@ -171,7 +171,7 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 								</button>
 								<a
 									href="/org"
-									class="text-sm text-surface-400 hover:text-surface-200 transition-colors"
+									class="text-sm text-surface-400 hover:text-surface-200 transition-colors cursor-pointer"
 								>
 									{t(langCode, "org.title")}
 								</a>
@@ -179,7 +179,7 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 								<form method="post" action="/auth/logout">
 									<button
 										type="submit"
-										class="text-sm text-surface-400 hover:text-surface-200 transition-colors"
+										class="text-sm text-surface-400 hover:text-surface-200 transition-colors cursor-pointer"
 									>
 										{t(langCode, "common.signOut")}
 									</button>
@@ -196,7 +196,7 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 							<div class="flex items-center gap-2">
 								<a
 									href="/"
-									class="text-surface-400 hover:text-surface-200 transition-colors"
+									class="text-surface-400 hover:text-surface-200 transition-colors cursor-pointer"
 								>
 									<svg
 										class="w-5 h-5"
@@ -252,7 +252,7 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 											<th class="table-header">
 												<a
 													href={getSortUrl(col.technical_name)}
-													class="flex items-center hover:text-primary-400 transition-colors"
+													class="flex items-center hover:text-primary-400 transition-colors cursor-pointer"
 												>
 													{col.name}
 													{sort.field === col.technical_name &&
@@ -295,7 +295,7 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 														<div class="flex items-center gap-2">
 															<button
 																type="button"
-																class="p-1.5 text-surface-400 hover:text-primary-400 hover:bg-surface-700 rounded transition-colors"
+																class="p-1.5 text-surface-400 hover:text-primary-400 hover:bg-surface-700 rounded transition-colors cursor-pointer"
 																onclick={`openEditModal('${record.id}', ${JSON.stringify(record.data).replace(/'/g, "\\'")})`}
 																title={t(langCode, "common.edit")}
 															>
@@ -315,7 +315,7 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 															</button>
 															<button
 																type="button"
-																class="p-1.5 text-surface-400 hover:text-red-400 hover:bg-surface-700 rounded transition-colors"
+																class="p-1.5 text-surface-400 hover:text-red-400 hover:bg-surface-700 rounded transition-colors cursor-pointer"
 																onclick={`deleteRecord('${record.id}')`}
 																title={t(langCode, "common.delete")}
 															>
@@ -434,7 +434,7 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 							<button
 								type="button"
 								onclick="closeModal()"
-								class="p-1 text-surface-400 hover:text-surface-200"
+								class="p-1 text-surface-400 hover:text-surface-200 cursor-pointer"
 							>
 								<svg
 									class="w-5 h-5"
@@ -521,7 +521,7 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 						<button
 							type="button"
 							onclick="closeMediaModal()"
-							class="absolute -top-10 right-0 p-2 text-white/70 hover:text-white transition-colors"
+							class="absolute -top-10 right-0 p-2 text-white/70 hover:text-white transition-colors cursor-pointer"
 						>
 							<svg
 								class="w-6 h-6"
@@ -565,7 +565,7 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 							<button
 								type="button"
 								onclick="document.getElementById('settings-modal').classList.add('hidden')"
-								class="p-1 text-surface-400 hover:text-surface-200"
+								class="p-1 text-surface-400 hover:text-surface-200 cursor-pointer"
 							>
 								<svg
 									class="w-5 h-5"
@@ -1080,7 +1080,7 @@ function formatValue(value: unknown, type: string): string | any {
 				<button
 					type="button"
 					onclick={`openMediaModal('${url}', '${filename.replace(/'/g, "\\'")}', '${contentType}')`}
-					class="block hover:opacity-80 transition-opacity"
+					class="block hover:opacity-80 transition-opacity cursor-pointer"
 				>
 					<img
 						src={url}
@@ -1097,7 +1097,7 @@ function formatValue(value: unknown, type: string): string | any {
 				<button
 					type="button"
 					onclick={`openMediaModal('${url}', '${filename.replace(/'/g, "\\'")}', '${contentType}')`}
-					class="relative block hover:opacity-80 transition-opacity"
+					class="relative block hover:opacity-80 transition-opacity cursor-pointer"
 				>
 					<video
 						src={url}
@@ -1121,7 +1121,7 @@ function formatValue(value: unknown, type: string): string | any {
 		return (
 			<a
 				href={url}
-				class="text-primary-400 hover:text-primary-300 underline"
+				class="text-primary-400 hover:text-primary-300 underline cursor-pointer"
 				target="_blank"
 				rel="noopener noreferrer"
 			>
