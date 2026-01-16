@@ -50,6 +50,7 @@ export interface DataStore {
 	description: string | null;
 	column_definitions: ColumnDefinition[];
 	cache_duration_seconds: number | null;
+	allowed_cors_origins: string | null;
 	created_at: Date;
 	updated_at: Date;
 }

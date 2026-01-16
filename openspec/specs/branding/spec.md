@@ -67,4 +67,3 @@ The record metadata row (created-by, created-at, updated-by, updated-at) SHALL a
 - **GIVEN** a user is viewing the datastore records table on a desktop device (screen width >= 768px)
 - **WHEN** the metadata row is displayed
 - **THEN** the created and updated information display inline as before
-

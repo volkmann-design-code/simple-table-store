@@ -100,6 +100,13 @@ const en: TranslationKeys = {
 		cacheDurationPlaceholder: "e.g., 3600 for 1 hour",
 		cacheDurationInvalid:
 			"Cache duration must be between 0 and 31536000 seconds",
+		corsOriginsLabel: "Allowed CORS Origins",
+		corsOriginsDescription:
+			"Specify which origins are allowed to make cross-origin API requests. Enter one origin per line or comma-separated (e.g., https://example.com, https://app.example.com). Leave empty to disable CORS.",
+		corsOriginsPlaceholder:
+			"e.g., https://example.com, https://app.example.com",
+		corsOriginsInvalid:
+			"Invalid origin format. Origins must be complete URLs (e.g., https://example.com)",
 	},
 	org: {
 		title: "Organization",

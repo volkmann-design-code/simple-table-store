@@ -104,6 +104,12 @@ const de: Partial<TranslationKeys> = {
 		cacheDurationPlaceholder: "z.B. 3600 für 1 Stunde",
 		cacheDurationInvalid:
 			"Cache-Dauer muss zwischen 0 und 31536000 Sekunden liegen",
+		corsOriginsLabel: "Erlaubte CORS-Origins",
+		corsOriginsDescription:
+			"Geben Sie an, welche Origins Cross-Origin-API-Anfragen stellen dürfen. Geben Sie ein Origin pro Zeile oder kommagetrennt ein (z.B. https://example.com, https://app.example.com). Leer lassen, um CORS zu deaktivieren.",
+		corsOriginsPlaceholder: "z.B. https://example.com, https://app.example.com",
+		corsOriginsInvalid:
+			"Ungültiges Origin-Format. Origins müssen vollständige URLs sein (z.B. https://example.com)",
 	},
 	org: {
 		title: "Organisation",

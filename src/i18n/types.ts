@@ -99,6 +99,10 @@ export interface TranslationKeys {
 		cacheDurationDescription: string;
 		cacheDurationPlaceholder: string;
 		cacheDurationInvalid: string;
+		corsOriginsLabel: string;
+		corsOriginsDescription: string;
+		corsOriginsPlaceholder: string;
+		corsOriginsInvalid: string;
 	};
 	org: {
 		title: string;

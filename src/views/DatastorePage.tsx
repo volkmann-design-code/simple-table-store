@@ -534,6 +534,29 @@ export const DatastorePage: FC<DatastorePageProps> = ({
 										{t(langCode, "datastore.cacheDurationDescription")}
 									</p>
 								</div>
+								<div>
+									<label
+										for="cors-origins-input"
+										class="block text-sm font-medium text-surface-300 mb-1.5"
+									>
+										{t(langCode, "datastore.corsOriginsLabel")}
+									</label>
+									<textarea
+										id="cors-origins-input"
+										name="allowed_cors_origins"
+										rows="3"
+										placeholder={t(
+											langCode,
+											"datastore.corsOriginsPlaceholder",
+										)}
+										class="input w-full"
+									>
+										{datastore.allowed_cors_origins ?? ""}
+									</textarea>
+									<p class="text-xs text-surface-500 mt-1.5">
+										{t(langCode, "datastore.corsOriginsDescription")}
+									</p>
+								</div>
 							</div>
 							<div class="flex justify-end gap-3 mt-6">
 								<button
@@ -588,6 +611,8 @@ export const DatastorePage: FC<DatastorePageProps> = ({
           const EXISTING_FILE_REFS = {};
           
           const translations = {
+            cacheDurationInvalid: '${t(langCode, "datastore.cacheDurationInvalid")}',
+            corsOriginsInvalid: '${t(langCode, "datastore.corsOriginsInvalid")}',
             addRecord: '${t(langCode, "datastore.addRecord")}',
             editRecord: '${t(langCode, "datastore.editRecord")}',
             currentFile: '${t(langCode, "datastore.currentFile")}',
@@ -912,8 +937,40 @@ export const DatastorePage: FC<DatastorePageProps> = ({
               // Validate cache duration
               if (cacheDurationSeconds !== null) {
                 if (isNaN(cacheDurationSeconds) || cacheDurationSeconds < 0 || cacheDurationSeconds > 31536000) {
-                  throw new Error('${t(langCode, "datastore.cacheDurationInvalid")}');
+                  throw new Error(translations.cacheDurationInvalid);
                 }
+              }
+              
+              // Get and validate CORS origins
+              const corsOriginsValue = formData.get('allowed_cors_origins');
+              let corsOrigins = corsOriginsValue ? corsOriginsValue.toString().trim() : null;
+              
+              // Validate CORS origins format if provided
+              if (corsOrigins && corsOrigins !== '') {
+                // Parse comma-separated or newline-separated origins
+                const origins = corsOrigins.split(/[,\n]/).map(o => o.trim()).filter(o => o.length > 0);
+                
+                // Basic validation - check if each origin looks like a URL
+                for (const origin of origins) {
+                  if (!origin.startsWith('http://') && !origin.startsWith('https://')) {
+                    throw new Error(translations.corsOriginsInvalid);
+                  }
+                  // Try to create URL to validate format
+                  try {
+                    const url = new URL(origin);
+                    // Origin should not have path, query, or fragment
+                    if (url.pathname !== '/' || url.search || url.hash) {
+                      throw new Error(translations.corsOriginsInvalid);
+                    }
+                  } catch (e) {
+                    throw new Error(translations.corsOriginsInvalid);
+                  }
+                }
+                
+                // Join validated origins with comma
+                corsOrigins = origins.join(',');
+              } else {
+                corsOrigins = null;
               }
               
               const response = await fetch(\`/api/datastores/\${DATASTORE_SLUG}\`, {
@@ -923,6 +980,7 @@ export const DatastorePage: FC<DatastorePageProps> = ({
                 },
                 body: JSON.stringify({
                   cache_duration_seconds: cacheDurationSeconds,
+                  allowed_cors_origins: corsOrigins,
                 }),
               });
               
