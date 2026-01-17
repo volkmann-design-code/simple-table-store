@@ -4,6 +4,7 @@ import { withApiKeyContext, withUserContext } from "../db";
 import { tFromContext } from "../i18n";
 import { sessionAuth } from "../middleware/session";
 import type { DataStore, File, FileReference } from "../types";
+import { setCorsHeaders, setCorsPreflightHeaders } from "../utils/cors";
 import { getCachedFile } from "../utils/file-cache";
 import { deleteFile, S3_BUCKET, uploadFile } from "../utils/s3";
 
@@ -168,7 +169,7 @@ fileRoutes.options("/files/:id", async (c) => {
 		return c.text("", 200);
 	}
 
-	// Get file to find its datastore_id
+	// Get file to find its datastore_id and verify access
 	const file = await withApiKeyContext<File | null>(
 		apiKeyDatastoreId,
 		async (client) => {
@@ -193,11 +194,20 @@ fileRoutes.options("/files/:id", async (c) => {
 		return c.text("", 200);
 	}
 
-	// Set CORS headers for preflight - allow any origin for file access
-	c.header("Access-Control-Allow-Origin", "*");
-	c.header("Access-Control-Allow-Methods", "GET, OPTIONS");
-	c.header("Access-Control-Allow-Headers", "X-API-Key, Content-Type");
-	c.header("Access-Control-Max-Age", "86400"); // Cache preflight for 24 hours
+	// Get datastore to check CORS configuration
+	const datastore = await withApiKeyContext<DataStore | null>(
+		apiKeyDatastoreId,
+		async (client) => {
+			const result = await client.query(
+				"SELECT * FROM datastores WHERE id = $1",
+				[apiKeyDatastoreId],
+			);
+			return result.rows[0] || null;
+		},
+	);
+
+	// Set CORS preflight headers if origin is allowed
+	setCorsPreflightHeaders(c, datastore);
 
 	console.log("[OPTIONS] Preflight response sent");
 	return c.text("", 200);
@@ -236,6 +246,8 @@ fileRoutes.get("/files/:id", async (c) => {
 		}
 	}
 
+	let datastore: DataStore | null = null;
+
 	// Check API key auth
 	if (!file) {
 		const apiKeyDatastoreId = await getApiKeyDatastoreId(c);
@@ -248,19 +260,36 @@ fileRoutes.get("/files/:id", async (c) => {
 			console.log(
 				"[Files GET] API key authentication detected, accessedViaApiKey = true",
 			);
-			file = await withApiKeyContext<File | null>(
-				apiKeyDatastoreId,
-				async (client) => {
-					const result = await client.query(
-						"SELECT * FROM files WHERE id = $1",
-						[fileId],
-					);
-					return result.rows[0] || null;
-				},
-			);
+
+			// Fetch both file and datastore
+			const result = await withApiKeyContext<{
+				file: File | null;
+				datastore: DataStore | null;
+			}>(apiKeyDatastoreId, async (client) => {
+				const fileResult = await client.query(
+					"SELECT * FROM files WHERE id = $1",
+					[fileId],
+				);
+				const dsResult = await client.query(
+					"SELECT * FROM datastores WHERE id = $1",
+					[apiKeyDatastoreId],
+				);
+				return {
+					file: fileResult.rows[0] || null,
+					datastore: dsResult.rows[0] || null,
+				};
+			});
+
+			file = result.file;
+			datastore = result.datastore;
+
 			console.log(
 				"[Files GET] File found via API key:",
 				file ? `yes (${file.id})` : "no",
+			);
+			console.log(
+				"[Files GET] Datastore found:",
+				datastore ? `yes (${datastore.slug})` : "no",
 			);
 		} else {
 			console.log("[Files GET] No API key found, accessedViaApiKey = false");
@@ -298,49 +327,51 @@ fileRoutes.get("/files/:id", async (c) => {
 		accessedViaApiKey,
 	);
 
-	// Set CORS headers for API key requests - allow any origin for file access
-	if (accessedViaApiKey) {
+	// Set CORS headers for API key requests based on datastore configuration
+	if (accessedViaApiKey && datastore) {
 		console.log("[Files GET] Setting CORS headers for API key request");
+		// Always set CORP to cross-origin for API key requests
 		headers["Cross-Origin-Resource-Policy"] = "cross-origin";
-		headers["Access-Control-Allow-Origin"] = "*";
-		headers["Access-Control-Allow-Methods"] = "GET, OPTIONS";
-		headers["Access-Control-Max-Age"] = "86400";
-		console.log("[Files GET] Headers set:", Object.keys(headers).join(", "));
 		console.log(
 			"[Files GET] CORP header value:",
 			headers["Cross-Origin-Resource-Policy"],
 		);
-		console.log(
-			"[Files GET] CORS header value:",
-			headers["Access-Control-Allow-Origin"],
-		);
-		console.log("[Files GET] All headers:", JSON.stringify(headers, null, 2));
 	} else {
 		console.log(
-			"[Files GET] NOT setting CORS headers - accessedViaApiKey is false",
-		);
-		console.log(
-			"[Files GET] Headers without CORS:",
-			Object.keys(headers).join(", "),
+			"[Files GET] NOT setting CORS headers - accessedViaApiKey is false or no datastore",
 		);
 	}
 
-	// Return file with headers
-	console.log(
-		"[Files GET] Final headers being sent:",
-		JSON.stringify(headers, null, 2),
-	);
+	console.log("[Files GET] Initial headers:", Object.keys(headers).join(", "));
+
+	// Create response object
 	const response = new Response(new Uint8Array(cached.body), {
 		headers,
 	});
 
 	// CRITICAL: Override any CORP header set by secureHeaders middleware
 	// This must be done on the Response object itself
-	if (accessedViaApiKey) {
+	if (accessedViaApiKey && datastore) {
 		response.headers.set("Cross-Origin-Resource-Policy", "cross-origin");
 		console.log(
 			"[Files GET] Overriding CORP header on Response object to:",
 			response.headers.get("Cross-Origin-Resource-Policy"),
+		);
+	}
+
+	// Set CORS headers using the standard helper (must be after Response creation)
+	// This helper sets Access-Control-Allow-Origin based on allowed_cors_origins
+	if (accessedViaApiKey && datastore) {
+		// Create a wrapper that works with the Response headers
+		const headerSetter = {
+			header: (name: string, value: string) =>
+				response.headers.set(name, value),
+			req: c.req,
+		};
+		setCorsHeaders(headerSetter, datastore);
+		console.log(
+			"[Files GET] CORS headers set via helper, Access-Control-Allow-Origin:",
+			response.headers.get("Access-Control-Allow-Origin") || "none",
 		);
 	}
 

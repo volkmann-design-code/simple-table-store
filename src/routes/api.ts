@@ -13,7 +13,11 @@ import { hashApiKey } from "../utils/apikey";
 import { setCorsHeaders, setCorsPreflightHeaders } from "../utils/cors";
 import { enrichRecordWithFileUrls } from "../utils/file-enrichment";
 import { deleteFile, S3_BUCKET } from "../utils/s3";
-import { validateCorsOrigin, validateRecordData } from "../utils/validation";
+import {
+	parseCorsOrigins,
+	validateCorsOrigin,
+	validateRecordData,
+} from "../utils/validation";
 
 export const apiRoutes = new Hono();
 
