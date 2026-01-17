@@ -1,6 +1,27 @@
 import type { DataStore } from "../types";
 import { isOriginAllowed, parseCorsOrigins } from "./validation";
 
+// Helper to get CORS header value (returns the origin if allowed, null otherwise)
+export function getCorsOriginHeader(
+	requestOrigin: string | undefined,
+	datastore: DataStore | null,
+): string | null {
+	if (!requestOrigin) {
+		return null;
+	}
+
+	if (!datastore) {
+		return null;
+	}
+
+	const allowedOrigins = parseCorsOrigins(datastore.allowed_cors_origins);
+	if (allowedOrigins && isOriginAllowed(requestOrigin, allowedOrigins)) {
+		return requestOrigin;
+	}
+
+	return null;
+}
+
 // Helper to set CORS headers for API key requests
 export function setCorsHeaders(
 	c: {
@@ -12,19 +33,12 @@ export function setCorsHeaders(
 	const requestOrigin = c.req.header("Origin");
 	console.log("[CORS] Request origin:", requestOrigin || "none");
 
-	if (!requestOrigin) {
-		console.log("[CORS] No Origin header, skipping CORS headers");
-		return;
-	}
-
-	const allowedOrigins = parseCorsOrigins(datastore.allowed_cors_origins);
-	console.log("[CORS] Allowed origins:", allowedOrigins || "none");
-
-	if (allowedOrigins && isOriginAllowed(requestOrigin, allowedOrigins)) {
+	const corsOrigin = getCorsOriginHeader(requestOrigin, datastore);
+	if (corsOrigin) {
 		console.log(
 			"[CORS] Origin allowed, setting Access-Control-Allow-Origin header",
 		);
-		c.header("Access-Control-Allow-Origin", requestOrigin);
+		c.header("Access-Control-Allow-Origin", corsOrigin);
 	} else {
 		console.log(
 			"[CORS] Origin not allowed or no allowed origins configured, not setting CORS headers",

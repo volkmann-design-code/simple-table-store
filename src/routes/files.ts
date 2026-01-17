@@ -4,7 +4,7 @@ import { withApiKeyContext, withUserContext } from "../db";
 import { tFromContext } from "../i18n";
 import { sessionAuth } from "../middleware/session";
 import type { DataStore, File, FileReference } from "../types";
-import { setCorsHeaders, setCorsPreflightHeaders } from "../utils/cors";
+import { getCorsOriginHeader, setCorsPreflightHeaders } from "../utils/cors";
 import { getCachedFile } from "../utils/file-cache";
 import { deleteFile, S3_BUCKET, uploadFile } from "../utils/s3";
 
@@ -272,15 +272,31 @@ fileRoutes.get("/files/:id", async (c) => {
 	// Set CORS headers if accessed via API key and datastore is available
 	if (accessedViaApiKey && datastore) {
 		const requestOrigin = c.req.header("Origin");
-		if (requestOrigin) {
-			const { parseCorsOrigins, isOriginAllowed } = await import(
-				"../utils/validation"
+		console.log("[Files CORS] Request origin:", requestOrigin || "none");
+		console.log(
+			"[Files CORS] Datastore CORS origins:",
+			datastore.allowed_cors_origins || "none",
+		);
+		const corsOrigin = getCorsOriginHeader(requestOrigin, datastore);
+		if (corsOrigin) {
+			console.log(
+				"[Files CORS] Setting Access-Control-Allow-Origin:",
+				corsOrigin,
 			);
-			const allowedOrigins = parseCorsOrigins(datastore.allowed_cors_origins);
-			if (allowedOrigins && isOriginAllowed(requestOrigin, allowedOrigins)) {
-				headers["Access-Control-Allow-Origin"] = requestOrigin;
-			}
+			headers["Access-Control-Allow-Origin"] = corsOrigin;
+		} else {
+			console.log(
+				"[Files CORS] Not setting CORS header (origin not allowed or missing)",
+			);
 		}
+	} else {
+		console.log(
+			"[Files CORS] Skipping CORS (accessedViaApiKey:",
+			accessedViaApiKey,
+			"datastore:",
+			datastore ? "found" : "null",
+			")",
+		);
 	}
 
 	// Return file with headers
