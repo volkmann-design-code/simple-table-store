@@ -61,7 +61,11 @@ async function getApiKeyDatastoreId(c: {
 	};
 }): Promise<string | null> {
 	// Check header first, then query parameter
-	const apiKey = c.req.header("X-API-Key") || c.req.query("api_key");
+	const apiKeyRaw = c.req.header("X-API-Key") || c.req.query("api_key");
+	if (!apiKeyRaw) return null;
+
+	// Trim whitespace to handle trailing spaces in URLs
+	const apiKey = apiKeyRaw.trim();
 	if (!apiKey) return null;
 
 	const keyHash = hashApiKey(apiKey);
@@ -242,8 +246,6 @@ apiRoutes.patch("/datastores/:slug", sessionAuth, async (c) => {
 
 // Handle CORS preflight requests for API key endpoints
 apiRoutes.options("/datastores/:slug/records", async (c) => {
-	const slug = c.req.param("slug");
-	const apiKey = c.req.header("X-API-Key") || c.req.query("api_key");
 	const apiKeyDatastoreId = await getApiKeyDatastoreId(c);
 
 	if (!apiKeyDatastoreId) {
@@ -251,30 +253,48 @@ apiRoutes.options("/datastores/:slug/records", async (c) => {
 		return c.text("", 200);
 	}
 
-	// Get datastore to check CORS settings
-	const result = await withApiKeyContext<DataStore | null>(
+	// Get datastore by ID to check CORS settings (slug verification happens in GET handler)
+	const datastore = await withApiKeyContext<DataStore | null>(
 		apiKeyDatastoreId,
 		async (client) => {
 			const dsResult = await client.query(
-				"SELECT * FROM datastores WHERE id = $1 AND slug = $2",
-				[apiKeyDatastoreId, slug],
+				"SELECT * FROM datastores WHERE id = $1",
+				[apiKeyDatastoreId],
 			);
 			return (dsResult.rows[0] || null) as DataStore | null;
 		},
 	);
 
 	const requestOrigin = c.req.header("Origin");
-	if (requestOrigin && result) {
-		const allowedOrigins = parseCorsOrigins(result.allowed_cors_origins);
+	if (requestOrigin && datastore) {
+		const allowedOrigins = parseCorsOrigins(datastore.allowed_cors_origins);
 		if (isOriginAllowed(requestOrigin, allowedOrigins)) {
 			c.header("Access-Control-Allow-Origin", requestOrigin);
 			c.header("Access-Control-Allow-Methods", "GET, OPTIONS");
 			c.header("Access-Control-Allow-Headers", "X-API-Key, Content-Type");
+			c.header("Access-Control-Max-Age", "86400"); // Cache preflight for 24 hours
 		}
 	}
 
 	return c.text("", 200);
 });
+
+// Helper to set CORS headers for API key requests
+function setCorsHeaders(
+	c: {
+		header: (name: string, value: string) => void;
+		req: { header: (name: string) => string | undefined };
+	},
+	datastore: DataStore,
+): void {
+	const requestOrigin = c.req.header("Origin");
+	if (!requestOrigin) return;
+
+	const allowedOrigins = parseCorsOrigins(datastore.allowed_cors_origins);
+	if (allowedOrigins && isOriginAllowed(requestOrigin, allowedOrigins)) {
+		c.header("Access-Control-Allow-Origin", requestOrigin);
+	}
+}
 
 // List records - supports both session and API key auth
 apiRoutes.get("/datastores/:slug/records", async (c) => {
@@ -335,7 +355,11 @@ apiRoutes.get("/datastores/:slug/records", async (c) => {
 		});
 
 		if (!result.datastore) {
-			return c.json({ error: tFromContext(c, "errors.forbidden") }, 403);
+			// Datastore not found or slug doesn't match - return 404 for consistency
+			return c.json(
+				{ error: tFromContext(c, "errors.datastoreNotFound") },
+				404,
+			);
 		}
 
 		// Enrich records with file URLs (include API key in URLs)
@@ -372,15 +396,7 @@ apiRoutes.get("/datastores/:slug/records", async (c) => {
 		}
 
 		// Set CORS headers if allowed origins are configured
-		const requestOrigin = c.req.header("Origin");
-		const allowedOrigins = parseCorsOrigins(
-			result.datastore.allowed_cors_origins,
-		);
-		if (requestOrigin && allowedOrigins) {
-			if (isOriginAllowed(requestOrigin, allowedOrigins)) {
-				c.header("Access-Control-Allow-Origin", requestOrigin);
-			}
-		}
+		setCorsHeaders(c, result.datastore);
 
 		return c.json(responseData);
 	}
