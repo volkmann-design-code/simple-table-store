@@ -62,11 +62,17 @@ async function getApiKeyDatastoreId(c: {
 }): Promise<string | null> {
 	// Check header first, then query parameter
 	const apiKeyRaw = c.req.header("X-API-Key") || c.req.query("api_key");
-	if (!apiKeyRaw) return null;
+	if (!apiKeyRaw) {
+		console.log("[API Key] No API key found in header or query");
+		return null;
+	}
 
 	// Trim whitespace to handle trailing spaces in URLs
 	const apiKey = apiKeyRaw.trim();
-	if (!apiKey) return null;
+	if (!apiKey) {
+		console.log("[API Key] API key is empty after trimming");
+		return null;
+	}
 
 	const keyHash = hashApiKey(apiKey);
 	const key = await adminQueryOne<ApiKey>(
@@ -74,9 +80,20 @@ async function getApiKeyDatastoreId(c: {
 		[keyHash],
 	);
 
-	if (!key) return null;
-	if (key.expires_at && new Date(key.expires_at) < new Date()) return null;
+	if (!key) {
+		console.log(
+			"[API Key] API key not found in database (hash:",
+			keyHash.substring(0, 8) + "...)",
+		);
+		return null;
+	}
 
+	if (key.expires_at && new Date(key.expires_at) < new Date()) {
+		console.log("[API Key] API key expired at", key.expires_at);
+		return null;
+	}
+
+	console.log("[API Key] Valid API key found, datastore_id:", key.datastore_id);
 	return key.datastore_id;
 }
 
@@ -244,38 +261,105 @@ apiRoutes.patch("/datastores/:slug", sessionAuth, async (c) => {
 	return c.json(result);
 });
 
+// Helper to get datastore by API key and slug (used by both OPTIONS and GET)
+async function getDatastoreByApiKeyAndSlug(
+	apiKeyDatastoreId: string,
+	slug: string,
+): Promise<DataStore | null> {
+	console.log(
+		"[Datastore] Looking up datastore with id:",
+		apiKeyDatastoreId,
+		"slug:",
+		slug,
+	);
+	return await withApiKeyContext<DataStore | null>(
+		apiKeyDatastoreId,
+		async (client) => {
+			// Verify the slug matches the API key's datastore
+			const dsResult = await client.query(
+				"SELECT * FROM datastores WHERE id = $1 AND slug = $2",
+				[apiKeyDatastoreId, slug],
+			);
+			const datastore = (dsResult.rows[0] || null) as DataStore | null;
+			if (datastore) {
+				console.log(
+					"[Datastore] Found datastore:",
+					datastore.slug,
+					"CORS origins:",
+					datastore.allowed_cors_origins || "none",
+				);
+			} else {
+				console.log(
+					"[Datastore] Datastore not found or slug mismatch for id:",
+					apiKeyDatastoreId,
+					"slug:",
+					slug,
+				);
+			}
+			return datastore;
+		},
+	);
+}
+
+// Helper to set CORS preflight headers
+function setCorsPreflightHeaders(
+	c: {
+		header: (name: string, value: string) => void;
+		req: { header: (name: string) => string | undefined };
+	},
+	datastore: DataStore | null,
+): void {
+	const requestOrigin = c.req.header("Origin");
+	console.log("[CORS Preflight] Request origin:", requestOrigin || "none");
+
+	if (!requestOrigin) {
+		console.log("[CORS Preflight] No Origin header, skipping CORS headers");
+		return;
+	}
+
+	if (!datastore) {
+		console.log("[CORS Preflight] No datastore found, skipping CORS headers");
+		return;
+	}
+
+	const allowedOrigins = parseCorsOrigins(datastore.allowed_cors_origins);
+	console.log("[CORS Preflight] Allowed origins:", allowedOrigins || "none");
+
+	if (isOriginAllowed(requestOrigin, allowedOrigins)) {
+		console.log("[CORS Preflight] Origin allowed, setting CORS headers");
+		c.header("Access-Control-Allow-Origin", requestOrigin);
+		c.header("Access-Control-Allow-Methods", "GET, OPTIONS");
+		c.header("Access-Control-Allow-Headers", "X-API-Key, Content-Type");
+		c.header("Access-Control-Max-Age", "86400"); // Cache preflight for 24 hours
+	} else {
+		console.log(
+			"[CORS Preflight] Origin not allowed, not setting CORS headers",
+		);
+	}
+}
+
 // Handle CORS preflight requests for API key endpoints
 apiRoutes.options("/datastores/:slug/records", async (c) => {
+	const slug = c.req.param("slug");
+	console.log("[OPTIONS] Preflight request for slug:", slug);
+
 	const apiKeyDatastoreId = await getApiKeyDatastoreId(c);
 
 	if (!apiKeyDatastoreId) {
 		// Not an API key request, return 200 with no CORS headers
+		console.log(
+			"[OPTIONS] No API key found, returning 200 without CORS headers",
+		);
 		return c.text("", 200);
 	}
 
-	// Get datastore by ID to check CORS settings (slug verification happens in GET handler)
-	const datastore = await withApiKeyContext<DataStore | null>(
-		apiKeyDatastoreId,
-		async (client) => {
-			const dsResult = await client.query(
-				"SELECT * FROM datastores WHERE id = $1",
-				[apiKeyDatastoreId],
-			);
-			return (dsResult.rows[0] || null) as DataStore | null;
-		},
-	);
+	// Verify slug matches the datastore (same check as GET handler)
+	const datastore = await getDatastoreByApiKeyAndSlug(apiKeyDatastoreId, slug);
 
-	const requestOrigin = c.req.header("Origin");
-	if (requestOrigin && datastore) {
-		const allowedOrigins = parseCorsOrigins(datastore.allowed_cors_origins);
-		if (isOriginAllowed(requestOrigin, allowedOrigins)) {
-			c.header("Access-Control-Allow-Origin", requestOrigin);
-			c.header("Access-Control-Allow-Methods", "GET, OPTIONS");
-			c.header("Access-Control-Allow-Headers", "X-API-Key, Content-Type");
-			c.header("Access-Control-Max-Age", "86400"); // Cache preflight for 24 hours
-		}
-	}
+	// Set CORS headers if origin is allowed (even if datastore not found, we still respond to preflight)
+	setCorsPreflightHeaders(c, datastore);
 
+	console.log("[OPTIONS] Preflight response sent");
 	return c.text("", 200);
 });
 
@@ -288,11 +372,25 @@ function setCorsHeaders(
 	datastore: DataStore,
 ): void {
 	const requestOrigin = c.req.header("Origin");
-	if (!requestOrigin) return;
+	console.log("[CORS] Request origin:", requestOrigin || "none");
+
+	if (!requestOrigin) {
+		console.log("[CORS] No Origin header, skipping CORS headers");
+		return;
+	}
 
 	const allowedOrigins = parseCorsOrigins(datastore.allowed_cors_origins);
+	console.log("[CORS] Allowed origins:", allowedOrigins || "none");
+
 	if (allowedOrigins && isOriginAllowed(requestOrigin, allowedOrigins)) {
+		console.log(
+			"[CORS] Origin allowed, setting Access-Control-Allow-Origin header",
+		);
 		c.header("Access-Control-Allow-Origin", requestOrigin);
+	} else {
+		console.log(
+			"[CORS] Origin not allowed or no allowed origins configured, not setting CORS headers",
+		);
 	}
 }
 
@@ -305,28 +403,60 @@ apiRoutes.get("/datastores/:slug/records", async (c) => {
 	const sortParam = c.req.query("sort");
 	const orderParam = c.req.query("order");
 
+	console.log("[GET] Request for slug:", slug, "page:", page, "limit:", limit);
+
 	// Check for API key first
 	const apiKey = c.req.header("X-API-Key") || c.req.query("api_key");
 	const apiKeyDatastoreId = await getApiKeyDatastoreId(c);
 
 	if (apiKeyDatastoreId) {
+		console.log("[GET] API key authentication detected");
 		// API key auth - use API key context
+		// First verify slug matches the datastore
+		const datastore = await getDatastoreByApiKeyAndSlug(
+			apiKeyDatastoreId,
+			slug,
+		);
+
+		if (!datastore) {
+			console.log("[GET] Datastore not found or slug mismatch, returning 404");
+			// Datastore not found or slug doesn't match - return 404
+			// Try to get datastore by ID only to check CORS (for error response)
+			const datastoreById = await withApiKeyContext<DataStore | null>(
+				apiKeyDatastoreId,
+				async (client) => {
+					const dsResult = await client.query(
+						"SELECT * FROM datastores WHERE id = $1",
+						[apiKeyDatastoreId],
+					);
+					return (dsResult.rows[0] || null) as DataStore | null;
+				},
+			);
+			// Set CORS headers if origin is allowed (even for error responses)
+			if (datastoreById) {
+				console.log(
+					"[GET] Found datastore by ID for CORS headers, slug:",
+					datastoreById.slug,
+				);
+				setCorsHeaders(c, datastoreById);
+			} else {
+				console.log(
+					"[GET] Datastore not found by ID either, cannot set CORS headers",
+				);
+			}
+			return c.json(
+				{ error: tFromContext(c, "errors.datastoreNotFound") },
+				404,
+			);
+		}
+
+		console.log("[GET] Datastore found, fetching records");
+
+		// Fetch records using API key context
 		const result = await withApiKeyContext<{
 			records: DataRecord[];
 			total: number;
-			datastore: DataStore | null;
 		}>(apiKeyDatastoreId, async (client) => {
-			// Verify the slug matches the API key's datastore
-			const dsResult = await client.query(
-				"SELECT * FROM datastores WHERE id = $1 AND slug = $2",
-				[apiKeyDatastoreId, slug],
-			);
-			const datastore = dsResult.rows[0] || null;
-
-			if (!datastore) {
-				return { records: [], total: 0, datastore: null };
-			}
-
 			const { orderBy } = buildOrderByClause(
 				sortParam,
 				orderParam,
@@ -350,24 +480,15 @@ apiRoutes.get("/datastores/:slug/records", async (c) => {
 			return {
 				records: recordsResult.rows,
 				total: parseInt(countResult.rows[0].count, 10),
-				datastore: datastore as DataStore,
 			};
 		});
-
-		if (!result.datastore) {
-			// Datastore not found or slug doesn't match - return 404 for consistency
-			return c.json(
-				{ error: tFromContext(c, "errors.datastoreNotFound") },
-				404,
-			);
-		}
 
 		// Enrich records with file URLs (include API key in URLs)
 		// Also remove email addresses for security (API key requests should not expose user emails)
 		const enrichedRecords = result.records.map((record) => {
 			const enriched = enrichRecordWithFileUrls(
 				record,
-				result.datastore!,
+				datastore,
 				apiKey || undefined,
 			);
 			// Remove email fields for security
@@ -387,7 +508,7 @@ apiRoutes.get("/datastores/:slug/records", async (c) => {
 
 		// Set Cache-Control header based on datastore cache_duration_seconds
 		// IMPORTANT: Set this BEFORE calling c.json() to ensure it's included in the response
-		const cacheDuration = result.datastore.cache_duration_seconds;
+		const cacheDuration = datastore.cache_duration_seconds;
 		if (cacheDuration && cacheDuration > 0) {
 			// Set cache headers for API key requests to allow browser/proxy caching
 			c.header("Cache-Control", `public, max-age=${cacheDuration}`);
@@ -396,11 +517,18 @@ apiRoutes.get("/datastores/:slug/records", async (c) => {
 		}
 
 		// Set CORS headers if allowed origins are configured
-		setCorsHeaders(c, result.datastore);
+		setCorsHeaders(c, datastore);
 
+		console.log(
+			"[GET] Returning",
+			result.records.length,
+			"records, total:",
+			result.total,
+		);
 		return c.json(responseData);
 	}
 
+	console.log("[GET] No API key found, checking session authentication");
 	// Session auth - check cookie
 	const { getCookie } = await import("hono/cookie");
 	const token = getCookie(c, "session");
