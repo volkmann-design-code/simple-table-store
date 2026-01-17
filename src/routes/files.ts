@@ -247,6 +247,7 @@ fileRoutes.get("/files/:id", async (c) => {
 	// Set CORS headers for API key requests - allow any origin for file access
 	if (accessedViaApiKey) {
 		headers["Access-Control-Allow-Origin"] = "*";
+		headers["Cross-Origin-Resource-Policy"] = "cross-origin";
 	}
 
 	// Return file with headers
