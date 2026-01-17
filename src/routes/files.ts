@@ -14,12 +14,30 @@ async function getApiKeyDatastoreId(c: {
 		query: (name: string) => string | undefined;
 	};
 }): Promise<string | null> {
-	const apiKey = c.req.header("X-API-Key") || c.req.query("api_key");
-	if (!apiKey) return null;
+	// Check header first, then query parameter
+	const apiKeyRaw = c.req.header("X-API-Key") || c.req.query("api_key");
+	console.log(
+		"[Files API Key] Raw API key from header/query:",
+		apiKeyRaw ? `${apiKeyRaw.substring(0, 10)}...` : "none",
+	);
+
+	if (!apiKeyRaw) {
+		console.log("[Files API Key] No API key found in header or query");
+		return null;
+	}
+
+	// Trim whitespace to handle trailing spaces in URLs
+	const apiKey = apiKeyRaw.trim();
+	if (!apiKey) {
+		console.log("[Files API Key] API key is empty after trimming");
+		return null;
+	}
 
 	const { hashApiKey } = await import("../utils/apikey");
 	const { adminQueryOne } = await import("../db");
 	const keyHash = hashApiKey(apiKey);
+	console.log("[Files API Key] Key hash:", keyHash.substring(0, 8) + "...");
+
 	const key = await adminQueryOne<{
 		datastore_id: string;
 		expires_at: Date | null;
@@ -27,9 +45,20 @@ async function getApiKeyDatastoreId(c: {
 		keyHash,
 	]);
 
-	if (!key) return null;
-	if (key.expires_at && new Date(key.expires_at) < new Date()) return null;
+	if (!key) {
+		console.log("[Files API Key] API key not found in database");
+		return null;
+	}
 
+	if (key.expires_at && new Date(key.expires_at) < new Date()) {
+		console.log("[Files API Key] API key expired at", key.expires_at);
+		return null;
+	}
+
+	console.log(
+		"[Files API Key] Valid API key found, datastore_id:",
+		key.datastore_id,
+	);
 	return key.datastore_id;
 }
 
@@ -177,6 +206,9 @@ fileRoutes.options("/files/:id", async (c) => {
 // Download file - supports session auth or API key auth
 fileRoutes.get("/files/:id", async (c) => {
 	const fileId = c.req.param("id");
+	console.log("[Files GET] Request for file:", fileId);
+	console.log("[Files GET] Request URL:", c.req.url);
+	console.log("[Files GET] Query params:", c.req.query());
 
 	let file: File | null = null;
 	let accessedViaApiKey = false;
@@ -207,8 +239,15 @@ fileRoutes.get("/files/:id", async (c) => {
 	// Check API key auth
 	if (!file) {
 		const apiKeyDatastoreId = await getApiKeyDatastoreId(c);
+		console.log(
+			"[Files GET] API key datastore ID:",
+			apiKeyDatastoreId || "none",
+		);
 		if (apiKeyDatastoreId) {
 			accessedViaApiKey = true;
+			console.log(
+				"[Files GET] API key authentication detected, accessedViaApiKey = true",
+			);
 			file = await withApiKeyContext<File | null>(
 				apiKeyDatastoreId,
 				async (client) => {
@@ -219,7 +258,17 @@ fileRoutes.get("/files/:id", async (c) => {
 					return result.rows[0] || null;
 				},
 			);
+			console.log(
+				"[Files GET] File found via API key:",
+				file ? `yes (${file.id})` : "no",
+			);
+		} else {
+			console.log("[Files GET] No API key found, accessedViaApiKey = false");
 		}
+	} else {
+		console.log(
+			"[Files GET] File found via session auth, accessedViaApiKey = false",
+		);
 	}
 
 	if (!file) {
@@ -244,18 +293,53 @@ fileRoutes.get("/files/:id", async (c) => {
 		"Content-Disposition": `inline; filename="${file.filename}"`,
 	};
 
+	console.log(
+		"[Files GET] accessedViaApiKey before setting headers:",
+		accessedViaApiKey,
+	);
+
 	// Set CORS headers for API key requests - allow any origin for file access
 	if (accessedViaApiKey) {
+		console.log("[Files GET] Setting CORS headers for API key request");
 		headers["Cross-Origin-Resource-Policy"] = "cross-origin";
 		headers["Access-Control-Allow-Origin"] = "*";
 		headers["Access-Control-Allow-Methods"] = "GET, OPTIONS";
 		headers["Access-Control-Max-Age"] = "86400";
+		console.log("[Files GET] Headers set:", Object.keys(headers).join(", "));
+		console.log(
+			"[Files GET] CORP header value:",
+			headers["Cross-Origin-Resource-Policy"],
+		);
+		console.log(
+			"[Files GET] CORS header value:",
+			headers["Access-Control-Allow-Origin"],
+		);
+		console.log("[Files GET] All headers:", JSON.stringify(headers, null, 2));
+	} else {
+		console.log(
+			"[Files GET] NOT setting CORS headers - accessedViaApiKey is false",
+		);
+		console.log(
+			"[Files GET] Headers without CORS:",
+			Object.keys(headers).join(", "),
+		);
 	}
 
 	// Return file with headers
-	return new Response(new Uint8Array(cached.body), {
+	console.log(
+		"[Files GET] Final headers being sent:",
+		JSON.stringify(headers, null, 2),
+	);
+	const response = new Response(new Uint8Array(cached.body), {
 		headers,
 	});
+	console.log(
+		"[Files GET] Response headers:",
+		Array.from(response.headers.entries())
+			.map(([k, v]) => `${k}: ${v}`)
+			.join(", "),
+	);
+	return response;
 });
 
 // Delete file - session auth only
