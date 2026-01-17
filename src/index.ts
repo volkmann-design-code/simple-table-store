@@ -14,7 +14,12 @@ const app = new Hono();
 
 // Global middleware
 app.use("*", logger());
-app.use("*", secureHeaders());
+app.use(
+	"*",
+	secureHeaders({
+		crossOriginResourcePolicy: false, // Disable CORP - we'll set it manually for file routes
+	}),
+);
 app.use(
 	"*",
 	languageDetector({
