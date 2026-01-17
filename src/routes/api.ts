@@ -10,14 +10,10 @@ import type {
 	PaginatedResponse,
 } from "../types";
 import { hashApiKey } from "../utils/apikey";
+import { setCorsHeaders, setCorsPreflightHeaders } from "../utils/cors";
 import { enrichRecordWithFileUrls } from "../utils/file-enrichment";
 import { deleteFile, S3_BUCKET } from "../utils/s3";
-import {
-	isOriginAllowed,
-	parseCorsOrigins,
-	validateCorsOrigin,
-	validateRecordData,
-} from "../utils/validation";
+import { validateCorsOrigin, validateRecordData } from "../utils/validation";
 
 export const apiRoutes = new Hono();
 
@@ -302,41 +298,6 @@ async function getDatastoreByApiKeyAndSlug(
 }
 
 // Helper to set CORS preflight headers
-function setCorsPreflightHeaders(
-	c: {
-		header: (name: string, value: string) => void;
-		req: { header: (name: string) => string | undefined };
-	},
-	datastore: DataStore | null,
-): void {
-	const requestOrigin = c.req.header("Origin");
-	console.log("[CORS Preflight] Request origin:", requestOrigin || "none");
-
-	if (!requestOrigin) {
-		console.log("[CORS Preflight] No Origin header, skipping CORS headers");
-		return;
-	}
-
-	if (!datastore) {
-		console.log("[CORS Preflight] No datastore found, skipping CORS headers");
-		return;
-	}
-
-	const allowedOrigins = parseCorsOrigins(datastore.allowed_cors_origins);
-	console.log("[CORS Preflight] Allowed origins:", allowedOrigins || "none");
-
-	if (isOriginAllowed(requestOrigin, allowedOrigins)) {
-		console.log("[CORS Preflight] Origin allowed, setting CORS headers");
-		c.header("Access-Control-Allow-Origin", requestOrigin);
-		c.header("Access-Control-Allow-Methods", "GET, OPTIONS");
-		c.header("Access-Control-Allow-Headers", "X-API-Key, Content-Type");
-		c.header("Access-Control-Max-Age", "86400"); // Cache preflight for 24 hours
-	} else {
-		console.log(
-			"[CORS Preflight] Origin not allowed, not setting CORS headers",
-		);
-	}
-}
 
 // Handle CORS preflight requests for API key endpoints
 apiRoutes.options("/datastores/:slug/records", async (c) => {
@@ -362,37 +323,6 @@ apiRoutes.options("/datastores/:slug/records", async (c) => {
 	console.log("[OPTIONS] Preflight response sent");
 	return c.text("", 200);
 });
-
-// Helper to set CORS headers for API key requests
-function setCorsHeaders(
-	c: {
-		header: (name: string, value: string) => void;
-		req: { header: (name: string) => string | undefined };
-	},
-	datastore: DataStore,
-): void {
-	const requestOrigin = c.req.header("Origin");
-	console.log("[CORS] Request origin:", requestOrigin || "none");
-
-	if (!requestOrigin) {
-		console.log("[CORS] No Origin header, skipping CORS headers");
-		return;
-	}
-
-	const allowedOrigins = parseCorsOrigins(datastore.allowed_cors_origins);
-	console.log("[CORS] Allowed origins:", allowedOrigins || "none");
-
-	if (allowedOrigins && isOriginAllowed(requestOrigin, allowedOrigins)) {
-		console.log(
-			"[CORS] Origin allowed, setting Access-Control-Allow-Origin header",
-		);
-		c.header("Access-Control-Allow-Origin", requestOrigin);
-	} else {
-		console.log(
-			"[CORS] Origin not allowed or no allowed origins configured, not setting CORS headers",
-		);
-	}
-}
 
 // List records - supports both session and API key auth
 apiRoutes.get("/datastores/:slug/records", async (c) => {

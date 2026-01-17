@@ -4,6 +4,7 @@ import { withApiKeyContext, withUserContext } from "../db";
 import { tFromContext } from "../i18n";
 import { sessionAuth } from "../middleware/session";
 import type { DataStore, File, FileReference } from "../types";
+import { setCorsHeaders, setCorsPreflightHeaders } from "../utils/cors";
 import { getCachedFile } from "../utils/file-cache";
 import { deleteFile, S3_BUCKET, uploadFile } from "../utils/s3";
 
@@ -124,11 +125,72 @@ fileRoutes.post("/datastores/:slug/files", sessionAuth, async (c) => {
 	return c.json(fileRef, 201);
 });
 
+// Handle CORS preflight requests for files endpoint
+fileRoutes.options("/files/:id", async (c) => {
+	const fileId = c.req.param("id");
+	console.log("[OPTIONS] Preflight request for file:", fileId);
+
+	const apiKeyDatastoreId = await getApiKeyDatastoreId(c);
+
+	if (!apiKeyDatastoreId) {
+		// Not an API key request, return 200 with no CORS headers
+		console.log(
+			"[OPTIONS] No API key found, returning 200 without CORS headers",
+		);
+		return c.text("", 200);
+	}
+
+	// Get file to find its datastore_id
+	const file = await withApiKeyContext<File | null>(
+		apiKeyDatastoreId,
+		async (client) => {
+			const result = await client.query("SELECT * FROM files WHERE id = $1", [
+				fileId,
+			]);
+			return result.rows[0] || null;
+		},
+	);
+
+	if (!file) {
+		// File not found or not accessible, but still respond to preflight
+		console.log("[OPTIONS] File not found, returning 200 without CORS headers");
+		return c.text("", 200);
+	}
+
+	// Verify file belongs to the API key's datastore
+	if (file.datastore_id !== apiKeyDatastoreId) {
+		console.log(
+			"[OPTIONS] File datastore mismatch, returning 200 without CORS headers",
+		);
+		return c.text("", 200);
+	}
+
+	// Get datastore to check CORS settings
+	const datastore = await withApiKeyContext<DataStore | null>(
+		apiKeyDatastoreId,
+		async (client) => {
+			const result = await client.query(
+				"SELECT * FROM datastores WHERE id = $1",
+				[apiKeyDatastoreId],
+			);
+			return result.rows[0] || null;
+		},
+	);
+
+	// Set CORS headers if origin is allowed (even if datastore not found, we still respond to preflight)
+	setCorsPreflightHeaders(c, datastore);
+
+	console.log("[OPTIONS] Preflight response sent");
+	return c.text("", 200);
+});
+
 // Download file - supports session auth or API key auth
 fileRoutes.get("/files/:id", async (c) => {
 	const fileId = c.req.param("id");
 
 	let file: File | null = null;
+	let datastore: DataStore | null = null;
+	let accessedViaApiKey = false;
 
 	// Check session auth first
 	const { getCookie } = await import("hono/cookie");
@@ -157,6 +219,7 @@ fileRoutes.get("/files/:id", async (c) => {
 	if (!file) {
 		const apiKeyDatastoreId = await getApiKeyDatastoreId(c);
 		if (apiKeyDatastoreId) {
+			accessedViaApiKey = true;
 			file = await withApiKeyContext<File | null>(
 				apiKeyDatastoreId,
 				async (client) => {
@@ -167,6 +230,20 @@ fileRoutes.get("/files/:id", async (c) => {
 					return result.rows[0] || null;
 				},
 			);
+
+			// Get datastore for CORS headers if file was found
+			if (file) {
+				datastore = await withApiKeyContext<DataStore | null>(
+					apiKeyDatastoreId,
+					async (client) => {
+						const result = await client.query(
+							"SELECT * FROM datastores WHERE id = $1",
+							[apiKeyDatastoreId],
+						);
+						return result.rows[0] || null;
+					},
+				);
+			}
 		}
 	}
 
@@ -186,12 +263,29 @@ fileRoutes.get("/files/:id", async (c) => {
 		);
 	}
 
-	// Set headers and return file
+	// Build response headers
+	const headers: Record<string, string> = {
+		"Content-Type": cached.contentType,
+		"Content-Disposition": `inline; filename="${file.filename}"`,
+	};
+
+	// Set CORS headers if accessed via API key and datastore is available
+	if (accessedViaApiKey && datastore) {
+		const requestOrigin = c.req.header("Origin");
+		if (requestOrigin) {
+			const { parseCorsOrigins, isOriginAllowed } = await import(
+				"../utils/validation"
+			);
+			const allowedOrigins = parseCorsOrigins(datastore.allowed_cors_origins);
+			if (allowedOrigins && isOriginAllowed(requestOrigin, allowedOrigins)) {
+				headers["Access-Control-Allow-Origin"] = requestOrigin;
+			}
+		}
+	}
+
+	// Return file with headers
 	return new Response(new Uint8Array(cached.body), {
-		headers: {
-			"Content-Type": cached.contentType,
-			"Content-Disposition": `inline; filename="${file.filename}"`,
-		},
+		headers,
 	});
 });
 
