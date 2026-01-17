@@ -333,8 +333,19 @@ fileRoutes.get("/files/:id", async (c) => {
 	const response = new Response(new Uint8Array(cached.body), {
 		headers,
 	});
+
+	// CRITICAL: Override any CORP header set by secureHeaders middleware
+	// This must be done on the Response object itself
+	if (accessedViaApiKey) {
+		response.headers.set("Cross-Origin-Resource-Policy", "cross-origin");
+		console.log(
+			"[Files GET] Overriding CORP header on Response object to:",
+			response.headers.get("Cross-Origin-Resource-Policy"),
+		);
+	}
+
 	console.log(
-		"[Files GET] Response headers:",
+		"[Files GET] Final Response headers:",
 		Array.from(response.headers.entries())
 			.map(([k, v]) => `${k}: ${v}`)
 			.join(", "),
